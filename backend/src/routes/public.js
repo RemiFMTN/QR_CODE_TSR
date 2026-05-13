@@ -93,8 +93,45 @@ const sendViaMailgun = async ({ from, to, subject, text, html }) => {
   try { return JSON.parse(body); } catch (e) { return { message: body }; }
 };
 
-// Unified sendMail wrapper: try Mailgun first (if configured), otherwise Nodemailer
+// Send via SendGrid (Twilio) API
+const sendViaSendGrid = async ({ from, to, subject, text, html }) => {
+  const key = (process.env.SENDGRID_API_KEY || '').trim();
+  if (!key) throw new Error('SendGrid API key missing');
+  const sg = require('@sendgrid/mail');
+  sg.setApiKey(key);
+
+  const msg = {
+    to: Array.isArray(to) ? to : String(to),
+    from: from,
+    subject: subject || '',
+    text: text || '',
+    html: html || ''
+  };
+
+  const res = await sg.send(msg);
+  // send returns an array of responses
+  try {
+    const info = res && res[0];
+    const id = info && (info.headers && (info.headers['x-message-id'] || info.headers['X-Message-Id'])) || info && info.statusCode;
+    return { id, message: 'queued' };
+  } catch (e) {
+    return { message: 'sent' };
+  }
+};
+
+// Unified sendMail wrapper: prefer SendGrid, then Mailgun, then SMTP
 const sendMail = async (opts) => {
+  const sendgridConfigured = (process.env.SENDGRID_API_KEY || '').trim();
+  if (sendgridConfigured) {
+    try {
+      const info = await sendViaSendGrid(opts);
+      console.log(`[MAIL] SendGrid sent to ${opts.to} id=${info.id || info.message}`);
+      return { messageId: info.id || info.message };
+    } catch (e) {
+      console.error('[MAIL] SendGrid send failed, falling back', e);
+    }
+  }
+
   const mailgunConfigured = (process.env.MAILGUN_API_KEY || '').trim() && (process.env.MAILGUN_DOMAIN || '').trim();
   if (mailgunConfigured) {
     try {
@@ -102,8 +139,7 @@ const sendMail = async (opts) => {
       console.log(`[MAIL] Mailgun sent to ${opts.to} id=${info.id || info.message}`);
       return { messageId: info.id || info.message };
     } catch (e) {
-      console.error('[MAIL] Mailgun send failed, falling back to SMTP', e);
-      // fallthrough to SMTP
+      console.error('[MAIL] Mailgun send failed, falling back', e);
     }
   }
 
