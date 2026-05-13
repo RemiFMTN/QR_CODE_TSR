@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class GroupScreen extends StatefulWidget {
   const GroupScreen({
     super.key,
+    required this.groupId,
     required this.groupName,
     required this.creatorName,
     required this.fallbackCode,
     required this.members,
   });
 
+  final String groupId;
   final String groupName;
   final String creatorName;
   final String fallbackCode;
@@ -84,10 +87,33 @@ class _GroupScreenState extends State<GroupScreen> {
                         value: member.checkedIn,
                         title: Text(member.name),
                         subtitle: Text(member.checkedIn ? 'Présent' : 'Absent'),
-                        onChanged: (value) {
+                        onChanged: (value) async {
+                          final nextValue = value ?? false;
+                          final previous = member.checkedIn;
                           setState(() {
-                            member.checkedIn = value ?? false;
+                            member.checkedIn = nextValue;
                           });
+                          try {
+                            await ApiService.updateCheckin(
+                              memberId: member.id,
+                              checkedIn: nextValue,
+                            );
+                          } catch (err) {
+                            if (!context.mounted) return;
+                            setState(() {
+                              member.checkedIn = previous;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  err.toString().replaceFirst(
+                                    'Exception: ',
+                                    '',
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
                         },
                       ),
                     );
@@ -129,10 +155,11 @@ class _StatusChip extends StatelessWidget {
 }
 
 class MemberItem {
-  MemberItem({required this.name, required this.checkedIn});
+  MemberItem({required this.id, required this.name, required this.checkedIn});
 
+  final String id;
   final String name;
   bool checkedIn;
 
-  MemberItem copy() => MemberItem(name: name, checkedIn: checkedIn);
+  MemberItem copy() => MemberItem(id: id, name: name, checkedIn: checkedIn);
 }

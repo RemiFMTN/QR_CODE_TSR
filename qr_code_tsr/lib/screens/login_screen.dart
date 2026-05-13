@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -82,14 +83,44 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: _loading
                             ? null
                             : () async {
+                                final username = _userController.text.trim();
+                                final password = _passController.text.trim();
+                                if (username.isEmpty || password.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Identifiant et mot de passe requis',
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 setState(() => _loading = true);
-                                await Future.delayed(
-                                  const Duration(milliseconds: 500),
-                                );
-                                if (!context.mounted) return;
-                                Navigator.of(
-                                  context,
-                                ).pushReplacementNamed('/scan');
+                                try {
+                                  await ApiService.login(
+                                    username: username,
+                                    password: password,
+                                  );
+                                  if (!context.mounted) return;
+                                  Navigator.of(
+                                    context,
+                                  ).pushReplacementNamed('/scan');
+                                } catch (err) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        err.toString().replaceFirst(
+                                          'Exception: ',
+                                          '',
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => _loading = false);
+                                }
                               },
                         child: _loading
                             ? const SizedBox(
