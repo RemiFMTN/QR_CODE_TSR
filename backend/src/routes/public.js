@@ -473,11 +473,58 @@ router.post('/groups/:id/members', async (req, res) => {
   const email = normalizeString(req.body?.email);
   if (!fullName) return res.status(400).json({ error: 'Missing fullName' });
 
-  const group = await get('SELECT id FROM groups WHERE id = ?', [id]);
+  const group = await get('SELECT id, name, creator_name, creator_email, qr_token, fallback_code FROM groups WHERE id = ?', [id]);
   if (!group) return res.status(404).json({ error: 'Group not found' });
+
+  if (email) {
+    const existingByEmail = await get(
+      'SELECT id FROM members WHERE group_id = ? AND LOWER(email) = LOWER(?)',
+      [id, email]
+    );
+    if (existingByEmail) {
+      return res.status(409).json({ error: 'Member email already exists in this group' });
+    }
+  }
 
   const memberId = uuidv4();
   await run('INSERT INTO members (id, group_id, full_name, email) VALUES (?, ?, ?, ?)', [memberId, id, fullName, email || null]);
+
+  if (email && group.creator_email && email.toLowerCase() !== String(group.creator_email).toLowerCase()) {
+    try {
+      const baseUrl = getBaseUrl(req);
+      const pdfUrl = `${baseUrl}/public/registration.pdf?token=${encodeURIComponent(group.qr_token)}`;
+      const memberText = [
+        'INSCRIPTION CONFIRMEE',
+        `Groupe : ${group.name}`,
+        `Createur : ${group.creator_name}`,
+        '',
+        'Vous avez ete ajoute aux participants.',
+        '',
+        `Telecharger le PDF : ${pdfUrl}`
+      ].join('\n');
+
+      const memberHtml = `
+        <p><strong>INSCRIPTION CONFIRMEE</strong></p>
+        <p>Groupe : ${group.name}<br />
+        Createur : ${group.creator_name}</p>
+        <p>Vous avez ete ajoute aux participants.</p>
+        <p>
+          <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Telecharger le PDF</a>
+        </p>
+      `;
+
+      const from = (process.env.SENDGRID_FROM || process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
+      if (from) {
+        const info = await sendMail({ from, to: email, subject: `Inscription TSR - ${group.name}`, text: memberText, html: memberHtml });
+        console.log(`[MAIL] Sent new-member email to ${email} messageId=${info && (info.messageId || info.message || info.id)}`);
+      } else {
+        console.log('[MAIL] No from address configured, skipped new-member email for', email);
+      }
+    } catch (e) {
+      console.error('[MAIL] Failed to send new-member email', email, e);
+    }
+  }
+
   return res.status(201).json({ id: memberId, fullName, email: email || null });
 });
 
