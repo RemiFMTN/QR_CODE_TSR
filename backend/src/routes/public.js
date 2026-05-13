@@ -128,13 +128,18 @@ const notifyRegistrationByEmail = async ({
       </p>
     `;
 
-    await transporter.sendMail({
-      from,
-      to: creatorEmail,
-      subject: `Inscription TSR - ${groupName} (CODE MODIFICATION)`,
-      text: creatorText,
-      html: creatorHtml
-    });
+    try {
+      const info = await transporter.sendMail({
+        from,
+        to: creatorEmail,
+        subject: `Inscription TSR - ${groupName} (CODE MODIFICATION)`,
+        text: creatorText,
+        html: creatorHtml
+      });
+      console.log(`[MAIL] Sent to creator ${creatorEmail} messageId=${info && info.messageId}`);
+    } catch (e) {
+      console.error('[MAIL] Failed to send to creator', creatorEmail, e);
+    }
   }
 
   // ========== EMAIL TO MEMBERS (without edit code) ==========
@@ -160,13 +165,18 @@ const notifyRegistrationByEmail = async ({
         </p>
       `;
 
-      await transporter.sendMail({
-        from,
-        to: member.email,
-        subject: `Inscription TSR - ${groupName}`,
-        text: memberText,
-        html: memberHtml
-      });
+      try {
+        const info = await transporter.sendMail({
+          from,
+          to: member.email,
+          subject: `Inscription TSR - ${groupName}`,
+          text: memberText,
+          html: memberHtml
+        });
+        console.log(`[MAIL] Sent to member ${member.email} messageId=${info && info.messageId}`);
+      } catch (e) {
+        console.error('[MAIL] Failed to send to member', member.email, e);
+      }
     }
   }
 };
