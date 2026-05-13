@@ -16,11 +16,43 @@
     body { margin:0; font-family: Arial, sans-serif; color:var(--ink); background: radial-gradient(circle at top left, #fff8ee 0%, var(--bg) 55%); }
     .container { max-width:820px; margin:40px auto; padding:0 20px 40px; }
     .card { background: var(--card); border-radius:16px; padding:24px; box-shadow:0 20px 60px rgba(15,23,42,0.08); }
+    .intro { display:flex; gap:18px; align-items:center; margin-bottom:20px; }
+    .logo {
+      width: 92px;
+      height: 92px;
+      flex: 0 0 92px;
+      border-radius: 18px;
+      background: #fff;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      padding: 10px;
+      object-fit: contain;
+    }
+    .intro-text h1 { margin-bottom: 8px; }
+    .intro-text p { margin: 0 0 8px; }
     h1 { margin-top:0; font-size:28px }
     label { display:block; font-weight:600; margin-bottom:8px }
     input { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; margin-bottom:14px; font-size:14px }
     .row { display:grid; grid-template-columns:1fr 1fr; gap:12px }
     .member { margin:6px 0; padding:8px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center }
+    .search-wrap { position: relative; margin-bottom: 10px; }
+    .search-wrap input { margin-bottom: 0; padding-right: 42px; }
+    .clear-search {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #d1d5db;
+      background: #fff;
+      color: #6b7280;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: none;
+    }
+    .search-empty { padding: 10px; border: 1px dashed #d1d5db; border-radius: 10px; }
     .actions { display:flex; gap:12px; align-items:center }
     .primary { background:var(--accent); color:white; border:none; border-radius:12px; padding:12px 18px; cursor:pointer }
     .secondary { background:#ecfeff; border:1px solid #a5f3fc; color:#0e7490; border-radius:12px; padding:10px 16px; cursor:pointer }
@@ -32,8 +64,13 @@
 <body>
   <div class="container">
     <div class="card">
-      <h1>Modifier votre groupe</h1>
-      <p class="muted">Accédez à la modification en fournissant votre e-mail et le code de secours.</p>
+      <div class="intro">
+        <img class="logo" src="LOGO-HD-TSR-PASTILLE.png" alt="Logo TSR" />
+        <div class="intro-text">
+          <h1>Modifier votre groupe</h1>
+          <p class="muted">Accédez à la modification en fournissant votre e-mail et le code de secours (voir PDF ou page d'inscription).</p>
+        </div>
+      </div>
 
       <div id="lookup">
         <div class="row">
@@ -68,12 +105,11 @@
           </div>
         </div>
 
-        <div style="margin-top:8px" class="actions">
-          <button id="btnSaveGroup" class="secondary">Enregistrer les modifications du groupe</button>
-          <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le PDF</a>
-        </div>
-
         <h3 style="margin-top:18px">Membres</h3>
+        <div class="search-wrap">
+          <input id="memberSearch" type="text" placeholder="Rechercher un membre (nom ou email)" />
+          <button id="clearSearch" type="button" class="clear-search" aria-label="Effacer la recherche">&times;</button>
+        </div>
         <div id="membersList"></div>
 
         <h4>Ajouter un membre</h4>
@@ -82,12 +118,18 @@
         <label>Email (optionnel)</label>
         <input id="newMemberEmail" type="email" />
         <div style="margin-top:8px" class="actions"><button id="btnAddMember" class="primary">Ajouter</button></div>
+
+        <div style="margin-top:20px" class="actions">
+          <button id="btnSaveGroup" class="secondary">Enregistrer les modifications du groupe</button>
+          <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le PDF</a>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     let currentGroup = null;
+    let currentMembers = [];
 
     const el = (id) => document.getElementById(id);
     const showError = (text) => { el('lookupError').textContent = text || ''; };
@@ -125,9 +167,19 @@
       el('qrToken').value = data.group.qrToken || '';
       el('pdfLink').href = '/public/registration.pdf?token=' + encodeURIComponent(data.group.qrToken);
 
+      currentMembers = data.members || [];
+      renderMembers(currentMembers);
+    }
+
+    function renderMembers(members) {
       const list = el('membersList');
       list.innerHTML = '';
-      (data.members||[]).forEach(m => {
+      if (!members.length) {
+        list.innerHTML = '<div class="search-empty muted">Aucun membre ne correspond à votre recherche.</div>';
+        return;
+      }
+
+      members.forEach(m => {
         const div = document.createElement('div');
         div.className = 'member';
         const left = document.createElement('div');
@@ -141,6 +193,28 @@
         list.appendChild(div);
       });
     }
+
+    function applyMemberFilter() {
+      const q = el('memberSearch').value.trim().toLowerCase();
+      el('clearSearch').style.display = q ? 'inline-block' : 'none';
+      if (!q) {
+        renderMembers(currentMembers);
+        return;
+      }
+      const filtered = currentMembers.filter((m) => {
+        const name = (m.full_name || '').toLowerCase();
+        const email = (m.email || '').toLowerCase();
+        return name.includes(q) || email.includes(q);
+      });
+      renderMembers(filtered);
+    }
+
+    el('memberSearch').addEventListener('input', applyMemberFilter);
+    el('clearSearch').addEventListener('click', () => {
+      el('memberSearch').value = '';
+      applyMemberFilter();
+      el('memberSearch').focus();
+    });
 
     el('btnSaveGroup').addEventListener('click', async () => {
       const name = el('groupName').value.trim();

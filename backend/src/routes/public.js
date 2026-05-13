@@ -96,25 +96,25 @@ router.get("/registration.pdf", async (req, res) => {
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader(
     "Content-Disposition",
-    `attachment; filename="registration-${group.name.replace(/\s+/g, "-")}.pdf"`
+    `attachment; filename="inscription-${group.name.replace(/\s+/g, "-")}.pdf"`
   );
 
   const doc = new PDFDocument({ margin: 40 });
   doc.pipe(res);
 
-  doc.fontSize(20).text("Event registration", { align: "left" });
+  doc.fontSize(20).text("Inscription a l'evenement", { align: "left" });
   doc.moveDown(0.5);
-  doc.fontSize(12).text(`Group: ${group.name}`);
-  doc.text(`Creator: ${group.creator_name}`);
-  doc.text(`Fallback code: ${group.fallback_code}`);
+  doc.fontSize(12).text(`Groupe : ${group.name}`);
+  doc.text(`Createur : ${group.creator_name}`);
+  doc.text(`Code de secours : ${group.fallback_code}`);
   doc.moveDown(0.5);
 
   doc.image(qrPng, { fit: [180, 180] });
   doc.moveDown(0.5);
-  doc.text(`QR token: ${group.qr_token}`);
+  doc.text(`Code QR : ${group.qr_token}`);
 
   doc.moveDown();
-  doc.fontSize(14).text("Members", { underline: true });
+  doc.fontSize(14).text("Membres", { underline: true });
   doc.moveDown(0.3);
   doc.fontSize(11);
   members.forEach((member, index) => {

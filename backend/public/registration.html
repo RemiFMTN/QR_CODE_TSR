@@ -37,6 +37,32 @@
         box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
       }
 
+      .intro {
+        display: flex;
+        gap: 18px;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .logo {
+        width: 150px;
+        height: 150px;
+        flex: 0 0 150px;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+        padding: 10px;
+        object-fit: contain;
+      }
+
+      .intro-text h1 {
+        margin-bottom: 8px;
+      }
+
+      .intro-text p {
+        margin: 0 0 8px;
+      }
+
       h1 {
         margin-top: 0;
         font-size: 28px;
@@ -162,9 +188,14 @@
   <body>
     <div class="container">
       <div class="card">
-        <h1>Inscription à l'évènement</h1>
-        <p class="muted">Créez votre groupe et ajoutez tous les membres en un seul clic.</p>
-        <p>Pensez à transmettre le QR code aux membres de votre groupe.</p>
+        <div class="intro">
+          <img class="logo" src="LOGO-HD-TSR-PASTILLE.png" alt="Logo TSR" />
+          <div class="intro-text">
+            <h1>Inscription à la Garden Party</h1>
+            <p>Créez votre groupe et ajoutez tous les membres en un seul clic.</p>
+            <p class="muted">Pensez à transmettre le QR code aux membres de votre groupe.</p>
+          </div>
+        </div>
 
         <form id="registration-form">
           <label for="groupName">Entreprise</label>
@@ -172,20 +203,20 @@
 
           <div class="row">
             <div>
-              <label for="creatorName">Vos nom et prénom</label>
+              <label for="creatorName">Nom - Prénom</label>
               <input id="creatorName" name="creatorName" required />
             </div>
             <div>
-              <label for="creatorEmail">Votre adresse email</label>
+              <label for="creatorEmail">Adresse mail</label>
               <input id="creatorEmail" name="creatorEmail" type="email" required />
             </div>
           </div>
 
-          <label>Membres</label>
+          <label>Invités</label>
           <div id="members"></div>
 
           <div class="actions">
-            <button type="button" class="secondary" id="add-member">Ajouter un membre</button>
+            <button type="button" class="secondary" id="add-member">Ajouter un invité</button>
             <button type="submit" class="primary">Soumettre l'inscription</button>
           </div>
         </form>
@@ -207,7 +238,7 @@
         row.className = "member-row";
 
         const nameInput = document.createElement("input");
-        nameInput.placeholder = "Nom complet du membre";
+        nameInput.placeholder = "Nom complet de l'invité";
         nameInput.value = name;
         nameInput.required = true;
 
@@ -281,17 +312,17 @@
           }
 
           const title = data.alreadyExists
-            ? "<strong>Group already exists</strong><br /><span class=\"muted\">Vous avez déjà un groupe enregistré avec cet email.</span>"
+            ? "<strong>Le groupe existe déjà</strong><br /><span class=\"muted\">Vous avez déjà un groupe enregistré avec cette adresse mail.</span>"
             : "<strong>Enregistrement confirmé !</strong>";
 
           result.innerHTML = `
             ${title}<br />
-            Group: ${data.group.name}<br />
-            QR token: ${data.group.qrToken}<br />
-            Fallback code: ${data.group.fallbackCode}
+            Groupe : ${data.group.name}<br />
+            Code QR : ${data.group.qrToken}<br />
+            Code de secours : ${data.group.fallbackCode}
             <div class="qr-box">
-              <img id="qr-image" alt="QR code" />
-              <div class="muted">Scannez ce QR à l'entrée. Nous vous conseillosn fortement de télécharger le PDF, il peut vous servir à modifier votre groupe.</div>
+              <img id="qr-image" alt="Code QR" />
+              <div class="muted">Scannez ce QR à l'entrée. Nous vous conseillons fortement de télécharger le PDF, il peut vous servir à modifier votre groupe plus tard.</div>
             </div>
             <div class="actions" style="margin-top: 12px;">
                 <a class="secondary" id="download-pdf" target="_blank">Télécharger le PDF</a>
