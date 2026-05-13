@@ -311,32 +311,18 @@
             throw new Error(data.error || "Registration failed");
           }
 
-          const title = data.alreadyExists
-            ? "<strong>Le groupe existe déjà</strong><br /><span class=\"muted\">Vous avez déjà un groupe enregistré avec cette adresse mail.</span>"
-            : "<strong>Enregistrement confirmé !</strong>";
+          // Redirect to confirmation page with all necessary parameters
+          const confirmParams = new URLSearchParams({
+            groupId: data.group.id,
+            fallbackCode: data.group.fallbackCode,
+            groupName: data.group.name,
+            creatorName: data.group.creatorName,
+            creatorEmail: data.group.creatorEmail,
+            qrToken: data.group.qrToken,
+            memberCount: data.members.length
+          });
 
-          result.innerHTML = `
-            ${title}<br />
-            Groupe : ${data.group.name}<br />
-            Code QR : ${data.group.qrToken}<br />
-            Code de secours : ${data.group.fallbackCode}
-            <div class="qr-box">
-              <img id="qr-image" alt="Code QR" />
-              <div class="muted">Scannez ce QR à l'entrée. Nous vous conseillons fortement de télécharger le PDF, il peut vous servir à modifier votre groupe plus tard.</div>
-            </div>
-            <div class="actions" style="margin-top: 12px;">
-                <a class="secondary" id="download-pdf" target="_blank">Télécharger le PDF</a>
-                <a class="secondary" id="edit-group" target="_blank" style="margin-left:8px;">Modifier votre groupe</a>
-              </div>
-          `;
-          const image = document.getElementById("qr-image");
-          image.src = `/public/qr?value=${encodeURIComponent(data.group.qrToken)}`;
-          const pdfLink = document.getElementById("download-pdf");
-          pdfLink.href = `/public/registration.pdf?token=${encodeURIComponent(data.group.qrToken)}`;
-          const editLink = document.getElementById('edit-group');
-          const params = new URLSearchParams({ creatorEmail: data.group.creatorEmail || document.getElementById('creatorEmail').value.trim(), fallbackCode: data.group.fallbackCode });
-          editLink.href = '/public/edit.html?' + params.toString();
-          result.style.display = "block";
+          window.location.href = `/public/confirmation.html?${confirmParams.toString()}`;
         } catch (err) {
           error.textContent = err.message;
           error.style.display = "block";

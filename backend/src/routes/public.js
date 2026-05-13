@@ -68,15 +68,6 @@ const notifyRegistrationByEmail = async ({
   qrToken,
   members
 }) => {
-  const recipients = new Set();
-  if (creatorEmail) recipients.add(creatorEmail);
-  members.forEach((member) => {
-    if (member.email) recipients.add(member.email);
-  });
-
-  const to = Array.from(recipients).filter(Boolean);
-  if (!to.length) return;
-
   const baseUrl = getBaseUrl(req);
   const pdfUrl = `${baseUrl}/public/registration.pdf?token=${encodeURIComponent(qrToken)}`;
   const editUrl = `${baseUrl}/public/edit.html?creatorEmail=${encodeURIComponent(creatorEmail)}&fallbackCode=${encodeURIComponent(fallbackCode)}`;
@@ -84,7 +75,7 @@ const notifyRegistrationByEmail = async ({
   const transporter = await getMailer();
   if (!transporter) {
     console.log("[LOCAL EMAIL] SMTP not configured. Skipping send.");
-    console.log("Recipients:", to);
+    console.log("Creator email:", creatorEmail);
     console.log("PDF URL:", pdfUrl);
     console.log("Edit URL:", editUrl);
     return;
@@ -100,40 +91,84 @@ const notifyRegistrationByEmail = async ({
     .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
     .join("\n");
 
-  const text = [
-    "Inscription confirmee",
-    `Groupe : ${groupName}`,
-    `Createur : ${creatorName}`,
-    `Code de secours : ${fallbackCode}`,
-    "",
-    "Membres :",
-    memberList,
-    "",
-    `PDF : ${pdfUrl}`,
-    `Modification du groupe : ${editUrl}`
-  ].join("\n");
+  // ========== EMAIL TO CREATOR (with edit code) ==========
+  if (creatorEmail) {
+    const creatorText = [
+      "INSCRIPTION CONFIRMEE",
+      `Groupe : ${groupName}`,
+      `Createur : ${creatorName}`,
+      "",
+      "CODE DE MODIFICATION (à conserver précieusement) :",
+      fallbackCode,
+      "",
+      "Membres :",
+      memberList,
+      "",
+      `Telecharger le PDF : ${pdfUrl}`,
+      `Modifier le groupe : ${editUrl}`
+    ].join("\n");
 
-  const html = `
-    <p><strong>Inscription confirmee</strong></p>
-    <p>Groupe : ${groupName}<br />
-    Createur : ${creatorName}<br />
-    Code de secours : ${fallbackCode}</p>
-    <p><strong>Membres</strong><br />${members
-      .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
-      .join("<br />")}</p>
-    <p>
-      <a href="${pdfUrl}">Telecharger le PDF</a><br />
-      <a href="${editUrl}">Modifier le groupe</a>
-    </p>
-  `;
+    const creatorHtml = `
+      <p><strong>INSCRIPTION CONFIRMEE</strong></p>
+      <p>Groupe : ${groupName}<br />
+      Createur : ${creatorName}</p>
+      
+      <div style="background-color: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p><strong>CODE DE MODIFICATION (à conserver précieusement) :</strong></p>
+        <p style="font-size: 24px; font-weight: bold; color: #d39e00; letter-spacing: 3px;">${fallbackCode}</p>
+      </div>
 
-  await transporter.sendMail({
-    from,
-    to: to.join(", "),
-    subject: `Inscription TSR - ${groupName}`,
-    text,
-    html
-  });
+      <p><strong>Membres</strong><br />${members
+        .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
+        .join("<br />")}</p>
+      
+      <p>
+        <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Telecharger le PDF</a><br />
+        <a href="${editUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Modifier le groupe</a>
+      </p>
+    `;
+
+    await transporter.sendMail({
+      from,
+      to: creatorEmail,
+      subject: `Inscription TSR - ${groupName} (CODE MODIFICATION)`,
+      text: creatorText,
+      html: creatorHtml
+    });
+  }
+
+  // ========== EMAIL TO MEMBERS (without edit code) ==========
+  for (const member of members) {
+    if (member.email) {
+      const memberText = [
+        "INSCRIPTION CONFIRMEE",
+        `Groupe : ${groupName}`,
+        `Createur : ${creatorName}`,
+        "",
+        "Vous avez ete ajoute aux participants.",
+        "",
+        `Telecharger le PDF : ${pdfUrl}`
+      ].join("\n");
+
+      const memberHtml = `
+        <p><strong>INSCRIPTION CONFIRMEE</strong></p>
+        <p>Groupe : ${groupName}<br />
+        Createur : ${creatorName}</p>
+        <p>Vous avez ete ajoute aux participants.</p>
+        <p>
+          <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Telecharger le PDF</a>
+        </p>
+      `;
+
+      await transporter.sendMail({
+        from,
+        to: member.email,
+        subject: `Inscription TSR - ${groupName}`,
+        text: memberText,
+        html: memberHtml
+      });
+    }
+  }
 };
 
 router.get("/qr", async (req, res) => {
@@ -191,7 +226,6 @@ router.get("/registration.pdf", async (req, res) => {
   doc.moveDown(0.5);
   doc.fontSize(12).text(`Groupe : ${group.name}`);
   doc.text(`Createur : ${group.creator_name}`);
-  doc.text(`Code de secours : ${group.fallback_code}`);
   doc.moveDown(0.5);
 
   doc.image(qrPng, { fit: [180, 180] });

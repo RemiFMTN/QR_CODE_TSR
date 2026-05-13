@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription Confirmée - TSR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: bounce 0.6s ease-in-out;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        .group-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            color: #666;
+            font-weight: 500;
+        }
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+        .code-section {
+            background: #fff3cd;
+            border: 3px solid #ffc107;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .code-label {
+            color: #856404;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+        .code-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #ff8c00;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            user-select: all;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .code-warning {
+            color: #856404;
+            font-size: 12px;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        .actions {
+            display: grid;
+            gap: 12px;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+            color: #666;
+            font-size: 14px;
+        }
+        .copy-feedback {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 5px;
+            display: none;
+            animation: slideIn 0.3s ease-in-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            .code-display {
+                font-size: 32px;
+                letter-spacing: 4px;
+            }
+            .actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Inscription Confirmée !</h1>
+        <p class="subtitle">Votre groupe a été créé avec succès.</p>
+
+        <div class="group-info">
+            <div class="info-row">
+                <span class="info-label">Groupe :</span>
+                <span class="info-value" id="groupName">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Créateur :</span>
+                <span class="info-value" id="creatorName">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Nombre de participants :</span>
+                <span class="info-value" id="memberCount">-</span>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <div class="code-label">🔐 Code de Modification (À conserver précieusement)</div>
+            <div class="code-display" id="codeDisplay" onclick="copyCode()">
+                -
+            </div>
+            <div class="code-warning">
+                💾 Cliquez pour copier | Gardez ce code en lieu sûr pour modifier le groupe plus tard
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="downloadPDF()">📥 Télécharger le PDF</button>
+            <button class="btn btn-secondary" onclick="goToEdit()">✏️ Modifier le groupe</button>
+            <button class="btn btn-outline" onclick="goHome()">🏠 Retour à l'accueil</button>
+        </div>
+
+        <div class="footer">
+            Un email de confirmation a également été envoyé à <strong id="emailDisplay">votre adresse</strong>
+        </div>
+    </div>
+
+    <div class="copy-feedback" id="copyFeedback">✓ Code copié !</div>
+
+    <script>
+        // Parse URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const groupId = params.get('groupId');
+        const fallbackCode = params.get('fallbackCode');
+        const groupName = params.get('groupName');
+        const creatorName = params.get('creatorName');
+        const creatorEmail = params.get('creatorEmail');
+        const qrToken = params.get('qrToken');
+        const memberCount = params.get('memberCount') || '0';
+
+        // Display info
+        document.getElementById('codeDisplay').textContent = fallbackCode || '-';
+        document.getElementById('groupName').textContent = groupName || '-';
+        document.getElementById('creatorName').textContent = creatorName || '-';
+        document.getElementById('memberCount').textContent = memberCount;
+        document.getElementById('emailDisplay').textContent = creatorEmail || 'votre adresse';
+
+        function copyCode() {
+            const code = document.getElementById('codeDisplay').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const feedback = document.getElementById('copyFeedback');
+                feedback.style.display = 'block';
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        function downloadPDF() {
+            if (!qrToken) {
+                alert('Erreur : token non trouvé');
+                return;
+            }
+            const baseUrl = window.location.origin;
+            window.location.href = `${baseUrl}/public/registration.pdf?token=${encodeURIComponent(qrToken)}`;
+        }
+
+        function goToEdit() {
+            if (!creatorEmail || !fallbackCode) {
+                alert('Erreur : informations manquantes');
+                return;
+            }
+            window.location.href = `/public/edit.html?creatorEmail=${encodeURIComponent(creatorEmail)}&fallbackCode=${encodeURIComponent(fallbackCode)}`;
+        }
+
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        // Auto-focus code for easy selection
+        window.addEventListener('load', () => {
+            const codeDisplay = document.getElementById('codeDisplay');
+            if (codeDisplay) {
+                codeDisplay.title = 'Cliquez pour copier le code';
+            }
+        });
+    </script>
+</body>
+</html>
