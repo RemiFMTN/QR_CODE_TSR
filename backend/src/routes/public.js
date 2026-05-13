@@ -59,6 +59,59 @@ const getMailer = async () => {
   return cachedTransporter;
 };
 
+// Send via Mailgun HTTP API
+const sendViaMailgun = async ({ from, to, subject, text, html }) => {
+  const apiKey = (process.env.MAILGUN_API_KEY || '').trim();
+  const domain = (process.env.MAILGUN_DOMAIN || '').trim();
+  if (!apiKey || !domain) throw new Error('Mailgun not configured');
+
+  const url = `https://api.mailgun.net/v3/${domain}/messages`;
+  const params = new URLSearchParams();
+  params.append('from', from);
+  params.append('to', Array.isArray(to) ? to.join(',') : to);
+  params.append('subject', subject || '');
+  if (text) params.append('text', text);
+  if (html) params.append('html', html);
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Basic ' + Buffer.from(`api:${apiKey}`).toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: params.toString()
+  });
+
+  const body = await res.text();
+  if (!res.ok) {
+    const err = new Error(`Mailgun error ${res.status}: ${body}`);
+    err.status = res.status;
+    throw err;
+  }
+
+  // Mailgun returns text like: "{"id":"<20111114174239.25659.5817@samples.mailgun.org>","message":"Queued. Thank you."}"
+  try { return JSON.parse(body); } catch (e) { return { message: body }; }
+};
+
+// Unified sendMail wrapper: try Mailgun first (if configured), otherwise Nodemailer
+const sendMail = async (opts) => {
+  const mailgunConfigured = (process.env.MAILGUN_API_KEY || '').trim() && (process.env.MAILGUN_DOMAIN || '').trim();
+  if (mailgunConfigured) {
+    try {
+      const info = await sendViaMailgun(opts);
+      console.log(`[MAIL] Mailgun sent to ${opts.to} id=${info.id || info.message}`);
+      return { messageId: info.id || info.message };
+    } catch (e) {
+      console.error('[MAIL] Mailgun send failed, falling back to SMTP', e);
+      // fallthrough to SMTP
+    }
+  }
+
+  const transporter = await getMailer();
+  if (!transporter) throw new Error('No mail transporter configured');
+  return transporter.sendMail(opts);
+};
+
 const notifyRegistrationByEmail = async ({
   req,
   groupName,
@@ -72,18 +125,19 @@ const notifyRegistrationByEmail = async ({
   const pdfUrl = `${baseUrl}/public/registration.pdf?token=${encodeURIComponent(qrToken)}`;
   const editUrl = `${baseUrl}/public/edit.html?creatorEmail=${encodeURIComponent(creatorEmail)}&fallbackCode=${encodeURIComponent(fallbackCode)}`;
 
-  const transporter = await getMailer();
-  if (!transporter) {
-    console.log("[LOCAL EMAIL] SMTP not configured. Skipping send.");
-    console.log("Creator email:", creatorEmail);
-    console.log("PDF URL:", pdfUrl);
-    console.log("Edit URL:", editUrl);
+  const mailgunConfigured = (process.env.MAILGUN_API_KEY || '').trim() && (process.env.MAILGUN_DOMAIN || '').trim();
+  const smtpConfigured = (process.env.SMTP_USER || '').trim() && (process.env.SMTP_PASS || '').trim();
+  if (!mailgunConfigured && !smtpConfigured) {
+    console.log('[LOCAL EMAIL] No mail provider configured (Mailgun or SMTP). Skipping send.');
+    console.log('Creator email:', creatorEmail);
+    console.log('PDF URL:', pdfUrl);
+    console.log('Edit URL:', editUrl);
     return;
   }
 
-  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || "").trim();
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || process.env.MAILGUN_FROM || '').trim();
   if (!from) {
-    console.log("[LOCAL EMAIL] SMTP_FROM/SMTP_USER missing. Skipping send.");
+    console.log('[LOCAL EMAIL] SMTP_FROM/SMTP_USER/MAILGUN_FROM missing. Skipping send.');
     return;
   }
 
@@ -129,14 +183,8 @@ const notifyRegistrationByEmail = async ({
     `;
 
     try {
-      const info = await transporter.sendMail({
-        from,
-        to: creatorEmail,
-        subject: `Inscription TSR - ${groupName} (CODE MODIFICATION)`,
-        text: creatorText,
-        html: creatorHtml
-      });
-      console.log(`[MAIL] Sent to creator ${creatorEmail} messageId=${info && info.messageId}`);
+      const info = await sendMail({ from, to: creatorEmail, subject: `Inscription TSR - ${groupName} (CODE MODIFICATION)`, text: creatorText, html: creatorHtml });
+      console.log(`[MAIL] Sent to creator ${creatorEmail} messageId=${info && (info.messageId || info.message || info.id)}`);
     } catch (e) {
       console.error('[MAIL] Failed to send to creator', creatorEmail, e);
     }
@@ -166,14 +214,8 @@ const notifyRegistrationByEmail = async ({
       `;
 
       try {
-        const info = await transporter.sendMail({
-          from,
-          to: member.email,
-          subject: `Inscription TSR - ${groupName}`,
-          text: memberText,
-          html: memberHtml
-        });
-        console.log(`[MAIL] Sent to member ${member.email} messageId=${info && info.messageId}`);
+        const info = await sendMail({ from, to: member.email, subject: `Inscription TSR - ${groupName}`, text: memberText, html: memberHtml });
+        console.log(`[MAIL] Sent to member ${member.email} messageId=${info && (info.messageId || info.message || info.id)}`);
       } catch (e) {
         console.error('[MAIL] Failed to send to member', member.email, e);
       }
