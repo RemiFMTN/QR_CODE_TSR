@@ -402,6 +402,11 @@ router.delete('/groups/:id/members/:memberId', async (req, res) => {
   const { id, memberId } = req.params;
   const member = await get('SELECT id FROM members WHERE id = ? AND group_id = ?', [memberId, id]);
   if (!member) return res.status(404).json({ error: 'Member not found' });
+  
+  // First delete all event_logs associated with this member (foreign key constraint)
+  await run('DELETE FROM event_logs WHERE member_id = ?', [memberId]);
+  
+  // Then delete the member
   await run('DELETE FROM members WHERE id = ?', [memberId]);
   return res.json({ ok: true });
 });
