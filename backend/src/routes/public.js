@@ -138,6 +138,10 @@ const notifyRegistrationByEmail = async ({
     .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
     .join("\n");
 
+  // Deduplicate: create a Set of member emails to avoid sending twice if creator is also a member
+  const memberEmails = new Set(members.filter(m => m.email).map(m => m.email.toLowerCase()));
+  const creatorEmailLower = creatorEmail ? creatorEmail.toLowerCase() : '';
+
   // ========== EMAIL TO CREATOR (with edit code) ==========
   if (creatorEmail) {
     const creatorText = [
@@ -184,8 +188,9 @@ const notifyRegistrationByEmail = async ({
   }
 
   // ========== EMAIL TO MEMBERS (without edit code) ==========
+  // Skip creator if they're also in the members list (already sent creator email with code)
   for (const member of members) {
-    if (member.email) {
+    if (member.email && member.email.toLowerCase() !== creatorEmailLower) {
       const memberText = [
         "INSCRIPTION CONFIRMEE",
         `Groupe : ${groupName}`,
