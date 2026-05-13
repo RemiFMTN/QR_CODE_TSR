@@ -33,7 +33,53 @@
     label { display:block; font-weight:600; margin-bottom:8px }
     input { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d1d5db; margin-bottom:14px; font-size:14px }
     .row { display:grid; grid-template-columns:1fr 1fr; gap:12px }
-    .member { margin:6px 0; padding:8px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center }
+    .section {
+      margin-top: 20px;
+      padding: 18px;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .section-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .section-description {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .summary-card {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .summary-label { display:block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .summary-value { display:block; font-weight: 700; margin-top: 4px; }
+    .toolbar {
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap: wrap;
+    }
+    .toolbar > * { flex: 1 1 auto; }
+    .member { margin:6px 0; padding:12px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; border-radius: 12px; background: white; }
     .search-wrap { position: relative; margin-bottom: 10px; }
     .search-wrap input { margin-bottom: 0; padding-right: 42px; }
     .clear-search {
@@ -53,7 +99,7 @@
       display: none;
     }
     .search-empty { padding: 10px; border: 1px dashed #d1d5db; border-radius: 10px; }
-    .actions { display:flex; gap:12px; align-items:center }
+    .actions { display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
     .primary { background:var(--accent); color:white; border:none; border-radius:12px; padding:12px 18px; cursor:pointer }
     .secondary { background:#ecfeff; border:1px solid #a5f3fc; color:#0e7490; border-radius:12px; padding:10px 16px; cursor:pointer }
     .muted { color:var(--muted) }
@@ -67,7 +113,21 @@
       color: #166534;
       font-weight: 700;
     }
-    @media (max-width:720px) { .row, .member { grid-template-columns:1fr } }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    @media (max-width:720px) {
+      .row, .member, .summary-grid { grid-template-columns:1fr }
+      .member { align-items:flex-start; gap: 12px; }
+    }
   </style>
 </head>
 <body>
@@ -82,58 +142,119 @@
       </div>
 
       <div id="lookup">
-        <div class="row">
-          <div>
-            <label>Adresse e-mail du créateur</label>
-            <input id="creatorEmail" type="email" placeholder="creator@example.com" />
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Accès au groupe</h2>
+              <p class="section-description">Renseignez l’e-mail du créateur et le code de secours pour ouvrir l’édition.</p>
+            </div>
+            <span class="badge">Étape 1</span>
           </div>
-          <div>
-            <label>Code de secours</label>
-            <input id="fallbackCode" type="text" placeholder="e.g. 442259" />
+          <div class="row">
+            <div>
+              <label>Adresse e-mail du créateur</label>
+              <input id="creatorEmail" type="email" placeholder="creator@example.com" />
+            </div>
+            <div>
+              <label>Code de secours</label>
+              <input id="fallbackCode" type="text" placeholder="e.g. 442259" />
+            </div>
           </div>
-        </div>
-        <div style="margin-top:12px" class="actions">
-          <button id="btnLookup" class="primary">Vérifier et modifier</button>
+          <div style="margin-top:12px" class="actions">
+            <button id="btnLookup" class="primary">Vérifier et modifier</button>
+          </div>
         </div>
         <div id="lookupError" style="color:red; margin-top:8px"></div>
       </div>
 
       <div id="editor" class="hidden">
-        <h2>Groupe</h2>
-        <label>Nom du groupe</label>
-        <input id="groupName" type="text" />
-
-        <div class="row">
-          <div>
-            <label>Nom du créateur</label>
-            <input id="creatorName" type="text" />
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Vue d’ensemble</h2>
+              <p class="section-description">Les informations principales du groupe sont regroupées ici.</p>
+            </div>
+            <span class="badge">Étape 2</span>
           </div>
-          <div>
-            <label class="muted">QR Token (lecture seule)</label>
-            <input id="qrToken" type="text" readonly />
+
+          <label>Nom du groupe</label>
+          <input id="groupName" type="text" />
+
+          <div class="row">
+            <div>
+              <label>Nom du créateur</label>
+              <input id="creatorName" type="text" />
+            </div>
+            <div>
+              <label class="muted">QR Token (lecture seule)</label>
+              <input id="qrToken" type="text" readonly />
+            </div>
+          </div>
+
+          <div class="summary-grid">
+            <div class="summary-card">
+              <span class="summary-label">Participants</span>
+              <span class="summary-value" id="memberCountLabel">0</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Membres visibles</span>
+              <span class="summary-value" id="visibleMemberCountLabel">0</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Recherche</span>
+              <span class="summary-value" id="currentSearchLabel">Aucune</span>
+            </div>
           </div>
         </div>
 
-        <h3 style="margin-top:18px">Membres</h3>
-        <div class="search-wrap">
-          <input id="memberSearch" type="text" placeholder="Rechercher un membre (nom ou email)" />
-          <button id="clearSearch" type="button" class="clear-search" aria-label="Effacer la recherche">&times;</button>
-        </div>
-        <div id="membersList"></div>
-
-        <h4>Ajouter un membre</h4>
-        <label>Nom complet</label>
-        <input id="newMemberName" type="text" />
-        <label>Email (optionnel)</label>
-        <input id="newMemberEmail" type="email" />
-        <div style="margin-top:8px" class="actions"><button id="btnAddMember" class="primary">Ajouter</button></div>
-
-        <div style="margin-top:20px" class="actions">
-          <button id="btnSaveGroup" class="secondary">Enregistrer les modifications du groupe</button>
-          <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le PDF</a>
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <h3 class="section-title">Recherche des membres</h3>
+              <p class="section-description">Filtrez la liste en tapant un nom ou un email.</p>
+            </div>
+          </div>
+          <div class="search-wrap">
+            <input id="memberSearch" type="text" placeholder="Rechercher un membre (nom ou email)" />
+            <button id="clearSearch" type="button" class="clear-search" aria-label="Effacer la recherche">&times;</button>
+          </div>
+          <div id="membersList"></div>
         </div>
 
-        <div id="actionMessage" class="success-message hidden"></div>
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <h3 class="section-title">Ajouter un membre</h3>
+              <p class="section-description">L’invitation est envoyée uniquement au nouveau membre ajouté.</p>
+            </div>
+            <span class="badge">Étape 3</span>
+          </div>
+          <div class="row">
+            <div>
+              <label>Nom complet</label>
+              <input id="newMemberName" type="text" />
+            </div>
+            <div>
+              <label>Email (optionnel)</label>
+              <input id="newMemberEmail" type="email" />
+            </div>
+          </div>
+          <div style="margin-top:8px" class="actions"><button id="btnAddMember" class="primary">Ajouter</button></div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div>
+              <h3 class="section-title">Actions</h3>
+              <p class="section-description">Enregistrez vos changements ou récupérez le PDF du groupe.</p>
+            </div>
+          </div>
+          <div class="toolbar">
+            <button id="btnSaveGroup" class="secondary">Enregistrer les modifications du groupe</button>
+            <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le PDF</a>
+          </div>
+          <div id="actionMessage" class="success-message hidden"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -185,6 +306,7 @@
 
       currentMembers = data.members || [];
       renderMembers(currentMembers);
+      updateSummary(currentMembers.length, currentMembers.length, 'Aucune');
     }
 
     function renderMembers(members) {
@@ -213,8 +335,10 @@
     function applyMemberFilter() {
       const q = el('memberSearch').value.trim().toLowerCase();
       el('clearSearch').style.display = q ? 'inline-block' : 'none';
+      el('currentSearchLabel').textContent = q || 'Aucune';
       if (!q) {
         renderMembers(currentMembers);
+        updateSummary(currentMembers.length, currentMembers.length, 'Aucune');
         return;
       }
       const filtered = currentMembers.filter((m) => {
@@ -223,6 +347,13 @@
         return name.includes(q) || email.includes(q);
       });
       renderMembers(filtered);
+      updateSummary(currentMembers.length, filtered.length, q);
+    }
+
+    function updateSummary(total, visible, searchLabel) {
+      el('memberCountLabel').textContent = total.toString();
+      el('visibleMemberCountLabel').textContent = visible.toString();
+      el('currentSearchLabel').textContent = searchLabel || 'Aucune';
     }
 
     el('memberSearch').addEventListener('input', applyMemberFilter);
@@ -247,6 +378,7 @@
         const data = await res.json();
         currentGroup = data.group;
         alert('Groupe mis à jour');
+        showActionMessage('Modifications enregistrées avec succès');
       } catch (err) {
         console.error(err);
         alert('Erreur réseau');

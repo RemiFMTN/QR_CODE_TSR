@@ -117,6 +117,11 @@ const notifyRegistrationByEmail = async ({
   const baseUrl = getBaseUrl(req);
   const pdfUrl = `${baseUrl}/public/registration.pdf?token=${encodeURIComponent(qrToken)}`;
   const editUrl = `${baseUrl}/public/edit.html?creatorEmail=${encodeURIComponent(creatorEmail)}&fallbackCode=${encodeURIComponent(fallbackCode)}`;
+  const qrDataUrl = await qrcode.toDataURL(qrToken, {
+    errorCorrectionLevel: 'M',
+    margin: 1,
+    width: 260
+  });
 
   const sendgridConfigured = (process.env.SENDGRID_API_KEY || '').trim();
   const smtpConfigured = (process.env.SMTP_USER || '').trim() && (process.env.SMTP_PASS || '').trim();
@@ -138,6 +143,11 @@ const notifyRegistrationByEmail = async ({
     .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
     .join("\n");
 
+  const panelStyle = 'background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:18px;margin:18px 0;';
+  const buttonStylePrimary = 'background:#0f766e;color:#ffffff;padding:12px 18px;text-decoration:none;border-radius:12px;display:inline-block;font-weight:700;';
+  const buttonStyleSecondary = 'background:#ffffff;color:#0f766e;padding:12px 18px;text-decoration:none;border-radius:12px;display:inline-block;font-weight:700;border:1px solid #0f766e;';
+  const smallMuted = 'color:#6b7280;font-size:13px;line-height:1.5;';
+
   // Deduplicate: create a Set of member emails to avoid sending twice if creator is also a member
   const memberEmails = new Set(members.filter(m => m.email).map(m => m.email.toLowerCase()));
   const creatorEmailLower = creatorEmail ? creatorEmail.toLowerCase() : '';
@@ -152,31 +162,42 @@ const notifyRegistrationByEmail = async ({
       "CODE DE MODIFICATION (à conserver précieusement) :",
       fallbackCode,
       "",
-      "Membres :",
-      memberList,
+      "QR CODE ET PDF :",
+      "Téléchargez le PDF pour conserver le QR code et le code de modification.",
+      "",
       "",
       `Telecharger le PDF : ${pdfUrl}`,
       `Modifier le groupe : ${editUrl}`
     ].join("\n");
 
     const creatorHtml = `
-      <p><strong>INSCRIPTION CONFIRMEE</strong></p>
-      <p>Groupe : ${groupName}<br />
-      Createur : ${creatorName}</p>
-      
-      <div style="background-color: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>CODE DE MODIFICATION (à conserver précieusement) :</strong></p>
-        <p style="font-size: 24px; font-weight: bold; color: #d39e00; letter-spacing: 3px;">${fallbackCode}</p>
-      </div>
+      <div style="font-family: Arial, sans-serif; color:#1f2937; background:#f8fafc; padding:24px; border-radius:18px;">
+        <h2 style="margin:0 0 8px; color:#0f766e;">Inscription confirmée</h2>
+        <p style="margin:0 0 18px; ${smallMuted}">Votre groupe est prêt. Le QR code est affiché ci-dessous et le PDF contient la version complète à conserver.</p>
 
-      <p><strong>Membres</strong><br />${members
-        .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
-        .join("<br />")}</p>
-      
-      <p>
-        <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Telecharger le PDF</a><br />
-        <a href="${editUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Modifier le groupe</a>
-      </p>
+        <div style="${panelStyle}">
+          <p style="margin:0 0 6px; font-size:14px; color:#6b7280; text-transform:uppercase; letter-spacing:.06em; font-weight:700;">Groupe</p>
+          <p style="margin:0; font-size:18px; font-weight:700;">${groupName}</p>
+          <p style="margin:6px 0 0; ${smallMuted}">Créateur : ${creatorName}</p>
+        </div>
+
+        <div style="${panelStyle}; background:#fff7ed; border-color:#fdba74; text-align:center;">
+          <p style="margin:0 0 8px; font-size:14px; font-weight:700; color:#9a3412;">Code de modification à conserver précieusement</p>
+          <div style="font-size:30px; font-weight:800; letter-spacing:6px; color:#b45309; margin-bottom:14px;">${fallbackCode}</div>
+          <a href="${editUrl}" style="${buttonStyleSecondary}">Modifier le groupe</a>
+        </div>
+
+        <div style="${panelStyle}; text-align:center;">
+          <p style="margin:0 0 12px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6b7280;">QR code d’accès</p>
+          <img src="${qrDataUrl}" alt="QR code" style="width:220px; max-width:100%; border:8px solid #ffffff; border-radius:18px; box-shadow:0 10px 30px rgba(15,23,42,.12); background:#fff;" />
+          <p style="margin:14px 0 0; ${smallMuted}">Téléchargez aussi le PDF pour garder une copie imprimable avec le QR code et le code de modification.</p>
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+          <a href="${pdfUrl}" style="${buttonStylePrimary}">Télécharger le PDF</a>
+          <a href="${editUrl}" style="${buttonStyleSecondary}">Modifier le groupe</a>
+        </div>
+      </div>
     `;
 
     try {
@@ -198,17 +219,32 @@ const notifyRegistrationByEmail = async ({
         "",
         "Vous avez ete ajoute aux participants.",
         "",
+        "Scannez le QR code ci-dessous ou téléchargez le PDF pour conserver votre QR code.",
+        "",
         `Telecharger le PDF : ${pdfUrl}`
       ].join("\n");
 
       const memberHtml = `
-        <p><strong>INSCRIPTION CONFIRMEE</strong></p>
-        <p>Groupe : ${groupName}<br />
-        Createur : ${creatorName}</p>
-        <p>Vous avez ete ajoute aux participants.</p>
-        <p>
-          <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Telecharger le PDF</a>
-        </p>
+        <div style="font-family: Arial, sans-serif; color:#1f2937; background:#f8fafc; padding:24px; border-radius:18px;">
+          <h2 style="margin:0 0 8px; color:#0f766e;">Invitation envoyée</h2>
+          <p style="margin:0 0 18px; ${smallMuted}">Vous avez été ajouté au groupe. Le QR code est visible ci-dessous ; le PDF reste la version la plus pratique à conserver.</p>
+
+          <div style="${panelStyle}">
+            <p style="margin:0 0 6px; font-size:14px; color:#6b7280; text-transform:uppercase; letter-spacing:.06em; font-weight:700;">Groupe</p>
+            <p style="margin:0; font-size:18px; font-weight:700;">${groupName}</p>
+            <p style="margin:6px 0 0; ${smallMuted}">Créateur : ${creatorName}</p>
+          </div>
+
+          <div style="${panelStyle}; text-align:center;">
+            <p style="margin:0 0 12px; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:#6b7280;">QR code d’accès</p>
+            <img src="${qrDataUrl}" alt="QR code" style="width:220px; max-width:100%; border:8px solid #ffffff; border-radius:18px; box-shadow:0 10px 30px rgba(15,23,42,.12); background:#fff;" />
+            <p style="margin:14px 0 0; ${smallMuted}">Téléchargez le PDF pour conserver le QR code en version imprimable ou hors ligne.</p>
+          </div>
+
+          <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+            <a href="${pdfUrl}" style="${buttonStylePrimary}">Télécharger le PDF</a>
+          </div>
+        </div>
       `;
 
       try {
