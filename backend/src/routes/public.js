@@ -2,6 +2,7 @@ const express = require("express");
 const crypto = require("crypto");
 const PDFDocument = require("pdfkit");
 const qrcode = require("qrcode");
+const nodemailer = require("nodemailer");
 const { all, get, run, uuidv4, db } = require("../db");
 
 const router = express.Router();
@@ -29,7 +30,37 @@ const normalizeMembers = (members) => {
     .filter((member) => member.fullName.length > 0);
 };
 
-const logRegistrationEmail = ({
+let cachedTransporter = null;
+
+const getBaseUrl = (req) => {
+  const envBase = (process.env.PUBLIC_BASE_URL || "").trim();
+  if (envBase) return envBase.replace(/\/$/, "");
+  return `${req.protocol}://${req.get("host")}`;
+};
+
+const getMailer = async () => {
+  if (cachedTransporter) return cachedTransporter;
+
+  const host = (process.env.SMTP_HOST || "").trim();
+  const port = Number(process.env.SMTP_PORT || 587);
+  const user = (process.env.SMTP_USER || "").trim();
+  const pass = (process.env.SMTP_PASS || "").trim();
+  const secure = String(process.env.SMTP_SECURE || "false").toLowerCase() === "true";
+
+  if (!host || !port || !user || !pass) return null;
+
+  cachedTransporter = nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass }
+  });
+
+  return cachedTransporter;
+};
+
+const notifyRegistrationByEmail = async ({
+  req,
   groupName,
   creatorName,
   creatorEmail,
@@ -43,12 +74,66 @@ const logRegistrationEmail = ({
     if (member.email) recipients.add(member.email);
   });
 
-  console.log("[LOCAL EMAIL] Registration confirmation");
-  console.log("Recipients:", Array.from(recipients));
-  console.log("Group:", groupName);
-  console.log("Creator:", creatorName);
-  console.log("QR token:", qrToken);
-  console.log("Fallback code:", fallbackCode);
+  const to = Array.from(recipients).filter(Boolean);
+  if (!to.length) return;
+
+  const baseUrl = getBaseUrl(req);
+  const pdfUrl = `${baseUrl}/public/registration.pdf?token=${encodeURIComponent(qrToken)}`;
+  const editUrl = `${baseUrl}/public/edit.html?creatorEmail=${encodeURIComponent(creatorEmail)}&fallbackCode=${encodeURIComponent(fallbackCode)}`;
+
+  const transporter = await getMailer();
+  if (!transporter) {
+    console.log("[LOCAL EMAIL] SMTP not configured. Skipping send.");
+    console.log("Recipients:", to);
+    console.log("PDF URL:", pdfUrl);
+    console.log("Edit URL:", editUrl);
+    return;
+  }
+
+  const from = (process.env.SMTP_FROM || process.env.SMTP_USER || "").trim();
+  if (!from) {
+    console.log("[LOCAL EMAIL] SMTP_FROM/SMTP_USER missing. Skipping send.");
+    return;
+  }
+
+  const memberList = members
+    .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
+    .join("\n");
+
+  const text = [
+    "Inscription confirmee",
+    `Groupe : ${groupName}`,
+    `Createur : ${creatorName}`,
+    `Code de secours : ${fallbackCode}`,
+    "",
+    "Membres :",
+    memberList,
+    "",
+    `PDF : ${pdfUrl}`,
+    `Modification du groupe : ${editUrl}`
+  ].join("\n");
+
+  const html = `
+    <p><strong>Inscription confirmee</strong></p>
+    <p>Groupe : ${groupName}<br />
+    Createur : ${creatorName}<br />
+    Code de secours : ${fallbackCode}</p>
+    <p><strong>Membres</strong><br />${members
+      .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
+      .join("<br />")}</p>
+    <p>
+      <a href="${pdfUrl}">Telecharger le PDF</a><br />
+      <a href="${editUrl}">Modifier le groupe</a>
+    </p>
+  `;
+
+  await transporter.sendMail({
+    from,
+    to: to.join(", "),
+    subject: `Inscription TSR - ${groupName}`,
+    text,
+    html
+  });
 };
 
 router.get("/qr", async (req, res) => {
@@ -232,14 +317,19 @@ router.post("/groups", async (req, res) => {
     return res.status(500).json({ error: 'Registration failed' });
   }
 
-  logRegistrationEmail({
-    groupName,
-    creatorName,
-    creatorEmail,
-    fallbackCode,
-    qrToken,
-    members: createdMembers
-  });
+  try {
+    await notifyRegistrationByEmail({
+      req,
+      groupName,
+      creatorName,
+      creatorEmail,
+      fallbackCode,
+      qrToken,
+      members: createdMembers
+    });
+  } catch (mailError) {
+    console.error("Email notification failed", mailError);
+  }
 
   return res.status(201).json({
     group: {
