@@ -9,6 +9,7 @@ class GroupScreen extends StatefulWidget {
     required this.creatorName,
     required this.fallbackCode,
     required this.members,
+    this.initialSearchQuery = '',
   });
 
   final String groupId;
@@ -16,6 +17,7 @@ class GroupScreen extends StatefulWidget {
   final String creatorName;
   final String fallbackCode;
   final List<MemberItem> members;
+  final String initialSearchQuery;
 
   @override
   State<GroupScreen> createState() => _GroupScreenState();
@@ -23,16 +25,31 @@ class GroupScreen extends StatefulWidget {
 
 class _GroupScreenState extends State<GroupScreen> {
   late final List<MemberItem> _members;
+  late final TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
     _members = widget.members.map((m) => m.copy()).toList();
+    _searchController = TextEditingController(text: widget.initialSearchQuery);
+    _searchController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final checkedCount = _members.where((m) => m.checkedIn).length;
+    final query = _searchController.text.trim().toLowerCase();
+    final filteredMembers = query.isEmpty
+        ? _members
+        : _members.where((member) {
+            return member.name.toLowerCase().contains(query);
+          }).toList();
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -70,19 +87,31 @@ class _GroupScreenState extends State<GroupScreen> {
                       checkedCount: checkedCount,
                       total: _members.length,
                     ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Rechercher un membre dans ce QR code',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                  itemCount: _members.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemCount: filteredMembers.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
                   itemBuilder: (context, index) {
-                    final member = _members[index];
+                    final member = filteredMembers[index];
                     return Card(
                       elevation: 0,
-                      color: Colors.white.withOpacity(0.92),
+                      color: Colors.white.withValues(alpha: 0.92),
                       child: CheckboxListTile(
                         value: member.checkedIn,
                         title: Text(member.name),
@@ -142,9 +171,9 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.4)),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
       child: Text(
         '$checkedCount / $total présents',

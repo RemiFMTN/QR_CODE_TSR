@@ -58,6 +58,15 @@
     .secondary { background:#ecfeff; border:1px solid #a5f3fc; color:#0e7490; border-radius:12px; padding:10px 16px; cursor:pointer }
     .muted { color:var(--muted) }
     .hidden { display:none }
+    .success-message {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #ecfdf5;
+      border: 1px solid #86efac;
+      color: #166534;
+      font-weight: 700;
+    }
     @media (max-width:720px) { .row, .member { grid-template-columns:1fr } }
   </style>
 </head>
@@ -123,6 +132,8 @@
           <button id="btnSaveGroup" class="secondary">Enregistrer les modifications du groupe</button>
           <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le PDF</a>
         </div>
+
+        <div id="actionMessage" class="success-message hidden"></div>
       </div>
     </div>
   </div>
@@ -133,6 +144,11 @@
 
     const el = (id) => document.getElementById(id);
     const showError = (text) => { el('lookupError').textContent = text || ''; };
+    const showActionMessage = (text) => {
+      const node = el('actionMessage');
+      node.textContent = text || '';
+      node.classList.toggle('hidden', !text);
+    };
 
     async function doLookup(creatorEmail, fallbackCode) {
       showError('');
@@ -249,6 +265,7 @@
         if (!res.ok) { const e = await res.json().catch(()=>({ error:'Erreur' })); return alert(e.error || 'Échec'); }
         await refreshGroup();
         el('newMemberName').value = ''; el('newMemberEmail').value = '';
+        showActionMessage(email ? 'Invitations envoyés aux membres ajoutés' : 'Membre ajouté');
       } catch (err) { console.error(err); alert('Erreur réseau'); }
     });
 

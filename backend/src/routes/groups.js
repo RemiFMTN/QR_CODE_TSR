@@ -12,6 +12,34 @@ router.get("/", async (req, res) => {
   return res.json(groups);
 });
 
+router.get("/search", async (req, res) => {
+  const query = typeof req.query.q === "string" ? req.query.q.trim() : "";
+  if (!query) return res.json([]);
+
+  const like = `%${query.toLowerCase()}%`;
+  const results = await all(
+    `SELECT
+      g.id as group_id,
+      g.name as group_name,
+      g.creator_name,
+      g.qr_token,
+      g.fallback_code,
+      m.id as member_id,
+      m.full_name,
+      m.email,
+      m.checked_in
+    FROM groups g
+    JOIN members m ON m.group_id = g.id
+    WHERE LOWER(g.name) LIKE ?
+       OR LOWER(m.full_name) LIKE ?
+       OR LOWER(COALESCE(m.email, '')) LIKE ?
+    ORDER BY g.name ASC, m.full_name ASC`,
+    [like, like, like]
+  );
+
+  return res.json(results);
+});
+
 router.get("/:id", async (req, res) => {
   const group = await get("SELECT * FROM groups WHERE id = ?", [req.params.id]);
   if (!group) return res.status(404).json({ error: "Group not found" });
