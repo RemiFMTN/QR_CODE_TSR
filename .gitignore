@@ -1,9 +1,0 @@
-node_modules/
-.env
-.DS_Store
-npm-debug.log
-dist/
-coverage/
-.vscode/
-.idea/
-EOF
