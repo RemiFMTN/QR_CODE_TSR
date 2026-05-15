@@ -157,11 +157,11 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
           TSR
         </div>
 
-        <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff;">
+        <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff !important;">
           ${title}
         </h1>
 
-        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#ffffff;opacity:0.95;">
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#ffffff !important;opacity:0.95;">
           ${intro}
         </p>
       </div>
@@ -278,6 +278,7 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
           <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
             <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">Participation enregistree</div>
             <div style="font-size:14px;line-height:1.7;color:#1e3a8a;">Vous avez ete ajoute aux participants. Le PDF de confirmation est disponible ci-dessous.</div>
+            <div style="font-size:14px;color:#1e3a8a;font-weight:700;">Telechargez le PDF contenant le QR code d'acces a presenter lors de votre arrivee.</div>
           </div>
 
           ${buildEmailButton(pdfUrl, "Telecharger le PDF", "#2563eb")}
