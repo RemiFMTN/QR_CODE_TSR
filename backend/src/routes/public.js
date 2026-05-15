@@ -204,8 +204,28 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
 
     const creatorHtml = buildEmailShell({
       title: "Inscription confirmée à la Garden Party de TSR Industrie!",
-      intro: `Votre groupe <strong>${escapeHtml(groupName)}</strong> à été enregistré. Vous trouverez ci-dessous le code de modification et les informations utiles.`,
+      intro: `Votre groupe <strong>${escapeHtml(groupName)}</strong> à été enregistré. Vous trouverez ci-dessous votre invitation QR Code, votre code de modification et les informations utiles.`,
       body: `
+      
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          ${buildEmailButton(pdfUrl, "Télécharger l'invitation (QR Code)", "#2563eb")}
+        </div>
+        
+        <div style="margin-bottom:22px;">
+          <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:10px;">Informations du groupe</div>
+          <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.7;">
+            <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
+            <div><strong>Créateur :</strong> ${escapeHtml(creatorName)}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:22px;">
+          <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:10px;">Membres du groupe</div>
+          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;">
+            <ol style="margin:0;padding-left:20px;line-height:1.8;">${memberItemsHtml}</ol>
+          </div>
+        </div>
+
         <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
           <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9a3412;margin-bottom:8px;">Code de modification</div>
           <div style="font-size:28px;font-weight:800;letter-spacing:4px;color:#c2410c;word-break:break-all;">${escapeHtml(fallbackCode)}</div>
@@ -217,25 +237,6 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
           <div style="font-size:15px;line-height:1.7;color:#7f1d1d;font-weight:700;">
             Si vous devez modifier votre groupe, contactez la personne qui vous a inscrite à l'événement, et transmettez-lui le mail fourni lors de la création du groupe, ainsi que le code reçu dans ce mail.
           </div>
-        </div>
-
-        <div style="margin-bottom:22px;">
-          <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:10px;">Informations du groupe</div>
-          <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.7;">
-            <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
-            <div><strong>Créateur :</strong> ${escapeHtml(creatorName)}</div>
-          </div>
-        </div>
-
-        <div style="margin-bottom:22px;">
-          <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:10px;">Membres</div>
-          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;">
-            <ol style="margin:0;padding-left:20px;line-height:1.8;">${memberItemsHtml}</ol>
-          </div>
-        </div>
-
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
-          ${buildEmailButton(pdfUrl, "Télécharger le PDF", "#2563eb")}
         </div>
       `,
       footer: `Si le bouton ne fonctionne pas, vous pouvez utiliser ce lien :<br />PDF : ${escapeHtml(pdfUrl)}`
@@ -267,8 +268,11 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
 
       const memberHtml = buildEmailShell({
         title: "Inscription confirmée à la Garden Party de TSR Industrie!",
-        intro: `Vous avez été ajoute au groupe <strong>${escapeHtml(groupName)}</strong>.`,
-        body: `
+        intro: `Vous avez été ajouté au groupe <strong>${escapeHtml(groupName)}</strong>.`,
+        body: `        
+
+          ${buildEmailButton(pdfUrl, "Télécharger le PDF", "#2563eb")}
+
           <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.8;margin-bottom:22px;">
             <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
             <div><strong>Createur :</strong> ${escapeHtml(creatorName)}</div>
@@ -276,11 +280,9 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
 
           <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
             <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">Participation enregistrée</div>
-            <div style="font-size:14px;line-height:1.7;color:#1e3a8a;">Vous avez ete ajoute aux participants de la Garden Party de TSR Industrie.</div>
+            <div style="font-size:14px;line-height:1.7;color:#1e3a8a;padding-bottom:2px;">Vous avez été invité à la Garden Party de TSR Industrie.</div>
             <div style="font-size:14px;color:#1e3a8a;font-weight:700;">IMPORTANT: Téléchargez le PDF contenant le QR code d'accès à présenter lors de votre arrivée.</div>
           </div>
-
-          ${buildEmailButton(pdfUrl, "Télécharger le PDF", "#2563eb")}
         `,
         footer: `Si le bouton ne fonctionne pas, ouvrez ce lien : ${escapeHtml(pdfUrl)}`
       });
