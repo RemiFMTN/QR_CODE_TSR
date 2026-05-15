@@ -207,6 +207,10 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
       intro: `Votre groupe <strong>${escapeHtml(groupName)}</strong> à été enregistré. Vous trouverez ci-dessous votre invitation QR Code, votre code de modification et les informations utiles.`,
       body: `
       
+        <div style="background:#ecfdf5;border:1px solid #86efac;border-radius:14px;padding:14px 18px;margin-bottom:18px;font-size:14px;font-weight:700;color:#166534;line-height:1.6;">
+          QR Code envoyé à tout les participants par mail
+        </div>
+
         <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:18px;margin-bottom:12px;">
           ${buildEmailButton(pdfUrl, "Cliquez ici pour enregistrer votre billet d'entrée (QR Code)", "#2563eb")}
         </div>

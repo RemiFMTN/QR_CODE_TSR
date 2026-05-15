@@ -205,7 +205,7 @@
           <div class="section-header">
             <div>
               <h2 class="section-title">Vue d’ensemble</h2>
-              <p class="section-description">Modifiez uniquement le nom du groupe et suivez le nombre de participants.</p>
+              <p class="section-description">Modifier le nom du groupe:</p>
             </div>
             <span class="badge">Étape 2</span>
           </div>
@@ -214,7 +214,6 @@
               <div>
                 <label for="groupName">Nom du groupe</label>
                 <input id="groupName" type="text" placeholder="Nom du groupe" />
-                <div class="field-note">Le bouton de validation s’active uniquement si vous modifiez ce champ.</div>
               </div>
               <div class="summary-card" style="margin:0;">
                 <span class="summary-label">Nombre de participants</span>
@@ -232,7 +231,6 @@
           <div class="section-header">
             <div>
               <h3 class="section-title">Ajouter un membre</h3>
-              <p class="section-description">L’ajout enregistre directement le membre et envoie le mail si une adresse est renseignée.</p>
             </div>
             <span class="badge">Étape 3</span>
           </div>
@@ -246,7 +244,7 @@
               <input id="newMemberEmail" type="email" />
             </div>
           </div>
-          <div style="margin-top:8px" class="actions"><button id="btnAddMember" class="primary">Ajouter</button></div>
+          <div style="margin-top:8px" class="actions"><button id="btnAddMember" class="primary">Ajouter et enregistrer</button></div>
         </div>
 
         <div class="section">
@@ -260,32 +258,17 @@
             <input id="memberSearch" type="text" placeholder="Rechercher un membre (nom ou email)" />
             <button id="clearSearch" type="button" class="clear-search" aria-label="Effacer la recherche">&times;</button>
           </div>
-          <div class="summary-grid">
-            <div class="summary-card">
-              <span class="summary-label">Membres visibles</span>
-              <span class="summary-value" id="visibleMemberCountLabel">0</span>
-            </div>
-            <div class="summary-card">
-              <span class="summary-label">Recherche</span>
-              <span class="summary-value" id="currentSearchLabel">Aucune</span>
-            </div>
-            <div class="summary-card">
-              <span class="summary-label">État</span>
-              <span class="summary-value" id="groupEditStateLabel">Nom inchangé</span>
-            </div>
-          </div>
           <div id="membersList" style="margin-top:14px;"></div>
         </div>
 
         <div class="section">
           <div class="section-header">
             <div>
-              <h3 class="section-title">Actions</h3>
-              <p class="section-description">Le PDF est toujours accessible ici.</p>
+              <h3 class="section-title">Liens vers le QR code</h3>
             </div>
           </div>
           <div class="toolbar">
-            <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le PDF</a>
+            <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le QR code</a>
           </div>
           <div id="actionMessage" class="success-message hidden"></div>
         </div>
@@ -372,7 +355,7 @@
         left.innerHTML = '<strong>' + escapeHtml(m.full_name || '') + '</strong>' + (m.email ? ('<div class="muted">' + escapeHtml(m.email) + '</div>') : '');
         const del = document.createElement('button');
         del.className = 'secondary';
-        del.textContent = 'Supprimer';
+        del.textContent = 'Supprimer et enregistrer';
         del.addEventListener('click', () => deleteMember(m.id));
         div.appendChild(left);
         div.appendChild(del);
@@ -409,6 +392,13 @@
       setGroupStatus(groupNameDirty ? 'Le nom du groupe a été modifié.' : 'Nom enregistré. Les changements du groupe se valident uniquement si le nom est modifié.', groupNameDirty);
     });
 
+    el('groupName').addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' && groupNameDirty) {
+        event.preventDefault();
+        el('btnValidateGroup').click();
+      }
+    });
+
     el('memberSearch').addEventListener('input', applyMemberFilter);
     el('clearSearch').addEventListener('click', () => {
       el('memberSearch').value = '';
@@ -432,9 +422,11 @@
         currentGroup = data.group;
         initialGroupName = data.group.name || name;
         groupNameDirty = false;
-        setGroupStatus('Nom du groupe mis à jour.', false);
+        setGroupStatus('Nom du groupe mis à jour. Vous pouvez le modifier à nouveau si besoin.', false);
         alert('Groupe mis à jour');
         showActionMessage('Modifications enregistrées avec succès');
+        el('groupName').focus();
+        el('groupName').select();
       } catch (err) {
         console.error(err);
         alert('Erreur réseau');

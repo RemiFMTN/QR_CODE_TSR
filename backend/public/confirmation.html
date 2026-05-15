@@ -277,15 +277,28 @@
 
         if (participantsListEl) {
             participantsListEl.innerHTML = '';
-            if (members.length === 0) {
+            const normalizedCreatorName = (creatorName || '').trim().toLowerCase();
+            const normalizedCreatorEmail = (creatorEmail || '').trim().toLowerCase();
+            const creatorAlreadyListed = members.some((member) => {
+                const memberName = String(member && member.fullName ? member.fullName : '').trim().toLowerCase();
+                const memberEmail = String(member && member.email ? member.email : '').trim().toLowerCase();
+                return (normalizedCreatorName && memberName === normalizedCreatorName) || (normalizedCreatorEmail && memberEmail === normalizedCreatorEmail);
+            });
+
+            const displayMembers = creatorAlreadyListed || !creatorName ? members : [{ fullName: creatorName, email: creatorEmail }, ...members];
+
+            if (displayMembers.length === 0) {
                 const emptyItem = document.createElement('li');
                 emptyItem.className = 'participant-item';
                 emptyItem.textContent = 'Aucun participant à afficher.';
                 participantsListEl.appendChild(emptyItem);
             } else {
-                members.forEach((member) => {
+                displayMembers.forEach((member, index) => {
                     const item = document.createElement('li');
                     item.className = 'participant-item';
+                    if (index === 0 && !creatorAlreadyListed) {
+                        item.style.fontWeight = '700';
+                    }
 
                     const name = document.createElement('span');
                     name.textContent = member && member.fullName ? member.fullName : '-';
