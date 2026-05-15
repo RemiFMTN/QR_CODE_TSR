@@ -571,25 +571,65 @@ router.post('/groups/:id/members', async (req, res) => {
     try {
       const baseUrl = getBaseUrl(req);
       const pdfUrl = `${baseUrl}/public/registration.pdf?token=${encodeURIComponent(group.qr_token)}`;
+      const escapeHtml = (value) => String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+      const buildEmailButton = (href, label, backgroundColor) => `
+        <a href="${href}" style="display:inline-block;background:${backgroundColor};color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;font-size:14px;line-height:1;">${label}</a>
+      `;
+
+      const buildEmailShell = ({ title, intro, body, footer }) => `
+        <div style="margin:0;padding:0;background:#ffffff;font-family:Arial,Helvetica,sans-serif;">
+          <div style="max-width:640px;margin:0 auto;">
+            <div style="background:#f8f9fa;padding:28px 32px;border-bottom:1px solid #e5e7eb;">
+              <div style="font-size:12px;letter-spacing:1.6px;text-transform:uppercase;margin-bottom:8px;">TSR</div>
+              <h1 style="margin:0;font-size:24px;line-height:1.2;margin-bottom:12px;">${title}</h1>
+              <p style="margin:0;font-size:15px;line-height:1.6;">${intro}</p>
+            </div>
+            <div style="padding:30px 32px;">
+              ${body}
+              <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:12px;line-height:1.6;">
+                ${footer}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
       const memberText = [
         'INSCRIPTION CONFIRMEE',
         `Groupe : ${group.name}`,
         `Createur : ${group.creator_name}`,
         '',
-        'Vous avez ete ajoute aux participants.',
+        'Vous avez ete ajoute aux participants de la Garden party de TSR Industrie !',
+        '',
+        "Telechargez le PDF de confirmation ci-dessous contenant le QR code d'acces, et presentez-le a l'entree de l'evenement.",
+        "Si vous avez des questions, n'hesitez pas a contacter le createur du groupe.",
         '',
         `Telecharger le PDF : ${pdfUrl}`
       ].join('\n');
 
-      const memberHtml = `
-        <p><strong>INSCRIPTION CONFIRMEE</strong></p>
-        <p>Groupe : ${group.name}<br />
-        Createur : ${group.creator_name}</p>
-        <p>Vous avez ete ajoute aux participants.</p>
-        <p style="margin-top:18px;">
-          <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Telecharger le PDF</a>
-        </p>
-      `;
+      const memberHtml = buildEmailShell({
+        title: 'Inscription confirmée à la Garden Party de TSR Industrie!',
+        intro: `Vous avez été ajouté au groupe <strong>${escapeHtml(group.name)}</strong>.`,
+        body: `
+          ${buildEmailButton(pdfUrl, "Cliquez ici pour enregistrer votre billet d'entrée (QR Code)", '#2563eb')}
+
+          <div style="margin-top:22px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.8;margin-bottom:22px;">
+            <div><strong>Groupe :</strong> ${escapeHtml(group.name)}</div>
+            <div><strong>Createur :</strong> ${escapeHtml(group.creator_name)}</div>
+          </div>
+
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
+            <div style="font-size:14px;color:#1e3a8a;font-weight:700;">IMPORTANT: Téléchargez le PDF contenant le billet d'entrée (QR Code) d'accès à présenter lors de votre arrivée. Celui-ci fait office de justificatif à l'entrée.</div>
+          </div>
+        `,
+        footer: `Si le bouton ne fonctionne pas, ouvrez ce lien : ${escapeHtml(pdfUrl)}`
+      });
 
       const from = (process.env.SENDGRID_FROM || process.env.SMTP_FROM || process.env.SMTP_USER || '').trim();
       if (from) {

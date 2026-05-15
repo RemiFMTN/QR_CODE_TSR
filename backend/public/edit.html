@@ -294,8 +294,34 @@
       const node = el('groupStatus');
       if (!node) return;
       node.innerHTML = text ? text : '';
-      el('groupEditStateLabel').textContent = isDirty ? 'Nom modifié' : 'Nom inchangé';
-      el('btnValidateGroup').disabled = !isDirty;
+      const groupEditStateLabel = el('groupEditStateLabel');
+      if (groupEditStateLabel) {
+        groupEditStateLabel.textContent = isDirty ? 'Nom modifié' : 'Nom inchangé';
+      }
+      const validateButton = el('btnValidateGroup');
+      if (validateButton) {
+        validateButton.disabled = !isDirty;
+      }
+    }
+
+    function getMembersWithCreator(members) {
+      const list = Array.isArray(members) ? [...members] : [];
+      if (!currentGroup) return list;
+
+      const creatorName = String(currentGroup.creatorName || '').trim();
+      const creatorEmail = String(currentGroup.creatorEmail || '').trim();
+      if (!creatorName && !creatorEmail) return list;
+
+      const creatorNameLower = creatorName.toLowerCase();
+      const creatorEmailLower = creatorEmail.toLowerCase();
+      const creatorAlreadyListed = list.some((member) => {
+        const memberName = String(member && member.full_name ? member.full_name : '').trim().toLowerCase();
+        const memberEmail = String(member && member.email ? member.email : '').trim().toLowerCase();
+        return (creatorNameLower && memberName === creatorNameLower) || (creatorEmailLower && memberEmail === creatorEmailLower);
+      });
+
+      if (creatorAlreadyListed) return list;
+      return [{ id: null, full_name: creatorName, email: creatorEmail, isCreatorOnly: true }, ...list];
     }
 
     async function doLookup(creatorEmail, fallbackCode) {
@@ -332,10 +358,13 @@
       groupNameDirty = false;
       el('groupName').value = initialGroupName;
       el('memberCountLabel').textContent = String((data.members || []).length);
-      el('visibleMemberCountLabel').textContent = String((data.members || []).length);
+      const visibleMemberCountLabel = el('visibleMemberCountLabel');
+      if (visibleMemberCountLabel) {
+        visibleMemberCountLabel.textContent = String((data.members || []).length);
+      }
       setGroupStatus('Nom enregistré. Les changements du groupe se valident uniquement si le nom est modifié.', false);
 
-      currentMembers = data.members || [];
+      currentMembers = getMembersWithCreator(data.members || []);
       renderMembers(currentMembers);
       updateSummary(currentMembers.length, currentMembers.length, 'Aucune');
     }
@@ -356,7 +385,14 @@
         const del = document.createElement('button');
         del.className = 'secondary';
         del.textContent = 'Supprimer et enregistrer';
-        del.addEventListener('click', () => deleteMember(m.id));
+        if (m.isCreatorOnly) {
+          del.disabled = true;
+          del.title = 'Le créateur ne peut pas être supprimé ici';
+          del.style.opacity = '0.7';
+          del.style.cursor = 'not-allowed';
+        } else {
+          del.addEventListener('click', () => deleteMember(m.id));
+        }
         div.appendChild(left);
         div.appendChild(del);
         list.appendChild(div);
@@ -366,7 +402,10 @@
     function applyMemberFilter() {
       const q = el('memberSearch').value.trim().toLowerCase();
       el('clearSearch').style.display = q ? 'inline-block' : 'none';
-      el('currentSearchLabel').textContent = q || 'Aucune';
+      const currentSearchLabel = el('currentSearchLabel');
+      if (currentSearchLabel) {
+        currentSearchLabel.textContent = q || 'Aucune';
+      }
       if (!q) {
         renderMembers(currentMembers);
         updateSummary(currentMembers.length, currentMembers.length, 'Aucune');
@@ -382,9 +421,18 @@
     }
 
     function updateSummary(total, visible, searchLabel) {
-      el('memberCountLabel').textContent = total.toString();
-      el('visibleMemberCountLabel').textContent = visible.toString();
-      el('currentSearchLabel').textContent = searchLabel || 'Aucune';
+      const memberCountLabel = el('memberCountLabel');
+      if (memberCountLabel) {
+        memberCountLabel.textContent = total.toString();
+      }
+      const visibleMemberCountLabel = el('visibleMemberCountLabel');
+      if (visibleMemberCountLabel) {
+        visibleMemberCountLabel.textContent = visible.toString();
+      }
+      const currentSearchLabel = el('currentSearchLabel');
+      if (currentSearchLabel) {
+        currentSearchLabel.textContent = searchLabel || 'Aucune';
+      }
     }
 
     el('groupName').addEventListener('input', () => {
