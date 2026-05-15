@@ -15,17 +15,14 @@
             background: #fff8ee;
             min-height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            flex-direction: column;
+            padding: 0;
         }
         .navbar {
             background: #1f2937;
             padding: 0;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            flex-shrink: 0;
         }
         .navbar-container {
             max-width: 1200px;
@@ -65,6 +62,14 @@
             }
         }
         .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            width: 100%;
+        }
+        .container-content {
             max-width: 600px;
             width: 100%;
             background: white;
@@ -269,6 +274,7 @@
     </nav>
 
     <div class="container">
+        <div class="container-content">
         <h1>Inscription Confirmée !</h1>
         <p class="subtitle">QR codes envoyés à tous les participants.</p>
 
@@ -300,6 +306,8 @@
     </div>
 
     <div class="copy-feedback" id="copyFeedback">✓ Code copié !</div>
+        </div>
+    </div>
 
     <script>
         // Parse URL parameters
