@@ -207,7 +207,7 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
       intro: `Votre groupe <strong>${escapeHtml(groupName)}</strong> à été enregistré. Vous trouverez ci-dessous votre invitation QR Code, votre code de modification et les informations utiles.`,
       body: `
       
-        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:18px;margin-bottom:12px;">
           ${buildEmailButton(pdfUrl, "Télécharger l'invitation (QR Code)", "#2563eb")}
         </div>
         
@@ -583,7 +583,7 @@ router.post('/groups/:id/members', async (req, res) => {
         <p>Groupe : ${group.name}<br />
         Createur : ${group.creator_name}</p>
         <p>Vous avez ete ajoute aux participants.</p>
-        <p>
+        <p style="margin-top:18px;">
           <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Telecharger le PDF</a>
         </p>
       `;
