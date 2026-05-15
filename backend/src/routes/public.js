@@ -87,12 +87,20 @@ const sendViaSendGrid = async ({ from, to, subject, text, html }) => {
   }
 };
 
-// Unified sendMail wrapper: prefer SendGrid, then SMTP
 const sendMail = async (opts) => {
+  // Ajouter l'encodage UTF-8
+  const optsWithCharset = {
+    ...opts,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      ...opts.headers
+    }
+  };
+  
   const sendgridConfigured = (process.env.SENDGRID_API_KEY || '').trim();
   if (sendgridConfigured) {
     try {
-      const info = await sendViaSendGrid(opts);
+      const info = await sendViaSendGrid(optsWithCharset);
       console.log(`[MAIL] SendGrid sent to ${opts.to} id=${info.id || info.message}`);
       return { messageId: info.id || info.message };
     } catch (e) {
@@ -102,7 +110,7 @@ const sendMail = async (opts) => {
 
   const transporter = await getMailer();
   if (!transporter) throw new Error('No mail transporter configured');
-  return transporter.sendMail(opts);
+  return transporter.sendMail(optsWithCharset);
 };
 
 const notifyRegistrationByEmail = async ({
@@ -195,19 +203,19 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
     ].join("\n");
 
     const creatorHtml = buildEmailShell({
-      title: "Inscription confirmee",
-      intro: `Votre groupe <strong>${escapeHtml(groupName)}</strong> a ete enregistre. Vous trouverez ci-dessous le code de modification et les informations utiles.`,
+      title: "Inscription confirmée à la Garden Party de TSR Industrie!",
+      intro: `Votre groupe <strong>${escapeHtml(groupName)}</strong> à été enregistré. Vous trouverez ci-dessous le code de modification et les informations utiles.`,
       body: `
         <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
           <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9a3412;margin-bottom:8px;">Code de modification</div>
           <div style="font-size:28px;font-weight:800;letter-spacing:4px;color:#c2410c;word-break:break-all;">${escapeHtml(fallbackCode)}</div>
-          <div style="margin-top:8px;font-size:13px;color:#7c2d12;">A conserver precieusement pour modifier le groupe plus tard.</div>
+          <div style="margin-top:8px;font-size:13px;color:#7c2d12;">A conserver précieusement pour modifier le groupe plus tard.</div>
         </div>
 
         <div style="background:#fef2f2;border:2px solid #ef4444;border-left:8px solid #dc2626;border-radius:14px;padding:18px 20px;margin-bottom:22px;box-shadow:0 6px 18px rgba(220,38,38,0.12);">
           <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#991b1b;margin-bottom:10px;">Information importante</div>
           <div style="font-size:15px;line-height:1.7;color:#7f1d1d;font-weight:700;">
-            Si vous devez modifier votre groupe, contactez la personne qui vous a inscrite a l'evenement, et transmettez-lui le mail fourni lors de la creation du groupe, ainsi que le code recu dans ce mail, et lors de la confirmation de l'inscription.
+            Si vous devez modifier votre groupe, contactez la personne qui vous a inscrite à l'événement, et transmettez-lui le mail fourni lors de la création du groupe, ainsi que le code reçu dans ce mail.
           </div>
         </div>
 
@@ -230,7 +238,7 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
           ${buildEmailButton(pdfUrl, "Télécharger le PDF", "#2563eb")}
         </div>
       `,
-      footer: `Si les boutons ne fonctionnent pas, vous pouvez utiliser ces liens :<br />PDF : ${escapeHtml(pdfUrl)}<br />Modification : ${escapeHtml(editUrl)}`
+      footer: `Si le bouton ne fonctionne pas, vous pouvez utiliser ce lien :<br />PDF : ${escapeHtml(pdfUrl)}`
     });
 
     try {
@@ -258,8 +266,8 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
       ].join("\n");
 
       const memberHtml = buildEmailShell({
-        title: "Inscription confirmee",
-        intro: `Vous avez ete ajoute au groupe <strong>${escapeHtml(groupName)}</strong>.`,
+        title: "Inscription confirmée à la Garden Party de TSR Industrie!",
+        intro: `Vous avez été ajoute au groupe <strong>${escapeHtml(groupName)}</strong>.`,
         body: `
           <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.8;margin-bottom:22px;">
             <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
@@ -267,12 +275,12 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
           </div>
 
           <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
-            <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">Participation enregistree</div>
-            <div style="font-size:14px;line-height:1.7;color:#1e3a8a;">Vous avez ete ajoute aux participants. Le PDF de confirmation est disponible ci-dessous.</div>
-            <div style="font-size:14px;color:#1e3a8a;font-weight:700;">Telechargez le PDF contenant le QR code d'acces a presenter lors de votre arrivee.</div>
+            <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">Participation enregistrée</div>
+            <div style="font-size:14px;line-height:1.7;color:#1e3a8a;">Vous avez ete ajoute aux participants de la Garden Party de TSR Industrie.</div>
+            <div style="font-size:14px;color:#1e3a8a;font-weight:700;">IMPORTANT: Téléchargez le PDF contenant le QR code d'accès à présenter lors de votre arrivée.</div>
           </div>
 
-          ${buildEmailButton(pdfUrl, "Telecharger le PDF", "#2563eb")}
+          ${buildEmailButton(pdfUrl, "Télécharger le PDF", "#2563eb")}
         `,
         footer: `Si le bouton ne fonctionne pas, ouvrez ce lien : ${escapeHtml(pdfUrl)}`
       });
