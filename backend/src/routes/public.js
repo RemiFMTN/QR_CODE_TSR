@@ -138,6 +138,51 @@ const notifyRegistrationByEmail = async ({
     .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
     .join("\n");
 
+  const escapeHtml = (value) => String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+  const buildEmailButton = (href, label, backgroundColor) => `
+    <a href="${href}" style="display:inline-block;background:${backgroundColor};color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:8px;font-weight:700;font-size:14px;line-height:1;">${label}</a>
+  `;
+
+const buildEmailShell = ({ title, intro, body, footer }) => `
+  <div style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+    <div style="max-width:640px;margin:0 auto;padding:24px 12px;">
+      <div style="background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);color:#ffffff;border-radius:18px 18px 0 0;padding:28px 32px;">
+        <div style="font-size:12px;letter-spacing:1.6px;text-transform:uppercase;opacity:0.85;margin-bottom:8px;">
+          TSR
+        </div>
+
+        <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff;">
+          ${title}
+        </h1>
+
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#ffffff;opacity:0.95;">
+          ${intro}
+        </p>
+      </div>
+
+      <div style="background:#ffffff;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;padding:30px 32px;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
+        ${body}
+
+        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;line-height:1.6;">
+          ${footer}
+        </div>
+      </div>
+    </div>
+  </div>
+`;
+
+  const memberItemsHtml = members
+    .map((m, i) => `
+      <li style="margin:0 0 10px;">${escapeHtml(m.fullName)}${m.email ? ` <span style="color:#6b7280;">(${escapeHtml(m.email)})</span>` : ""}</li>
+    `)
+    .join("");
+
   // Deduplicate: create a Set of member emails to avoid sending twice if creator is also a member
   const memberEmails = new Set(members.filter(m => m.email).map(m => m.email.toLowerCase()));
   const creatorEmailLower = creatorEmail ? creatorEmail.toLowerCase() : '';
@@ -149,35 +194,53 @@ const notifyRegistrationByEmail = async ({
       `Groupe : ${groupName}`,
       `Createur : ${creatorName}`,
       "",
-      "CODE DE MODIFICATION (├á conserver pr├®cieusement) :",
+      "CODE DE MODIFICATION (A conserver precieusement) :",
       fallbackCode,
       "",
       "Membres :",
       memberList,
       "",
-      `Telecharger le PDF : ${pdfUrl}`,
-      `Modifier le groupe : ${editUrl}`
+      `Telecharger le PDF : ${pdfUrl}`
     ].join("\n");
 
-    const creatorHtml = `
-      <p><strong>INSCRIPTION CONFIRMEE</strong></p>
-      <p>Groupe : ${groupName}<br />
-      Createur : ${creatorName}</p>
-      
-      <div style="background-color: #fff3cd; border: 2px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0;">
-        <p><strong>CODE DE MODIFICATION (├á conserver pr├®cieusement) :</strong></p>
-        <p style="font-size: 24px; font-weight: bold; color: #d39e00; letter-spacing: 3px;">${fallbackCode}</p>
-      </div>
+    const creatorHtml = buildEmailShell({
+      title: "Inscription confirmee",
+      intro: `Votre groupe <strong>${escapeHtml(groupName)}</strong> a ete enregistre. Vous trouverez ci-dessous le code de modification et les informations utiles.`,
+      body: `
+        <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#9a3412;margin-bottom:8px;">Code de modification</div>
+          <div style="font-size:28px;font-weight:800;letter-spacing:4px;color:#c2410c;word-break:break-all;">${escapeHtml(fallbackCode)}</div>
+          <div style="margin-top:8px;font-size:13px;color:#7c2d12;">A conserver precieusement pour modifier le groupe plus tard.</div>
+        </div>
 
-      <p><strong>Membres</strong><br />${members
-        .map((m, i) => `${i + 1}. ${m.fullName}${m.email ? ` (${m.email})` : ""}`)
-        .join("<br />")}</p>
-      
-      <p>
-        <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-right: 10px;">Telecharger le PDF</a><br />
-        <a href="${editUrl}" style="background-color: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px;">Modifier le groupe</a>
-      </p>
-    `;
+        <div style="background:#fef2f2;border:2px solid #ef4444;border-left:8px solid #dc2626;border-radius:14px;padding:18px 20px;margin-bottom:22px;box-shadow:0 6px 18px rgba(220,38,38,0.12);">
+          <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#991b1b;margin-bottom:10px;">Information importante</div>
+          <div style="font-size:15px;line-height:1.7;color:#7f1d1d;font-weight:700;">
+            Si vous devez modifier votre groupe, contactez la personne qui vous a inscrite a l'evenement, et transmettez-lui le mail fourni lors de la creation du groupe, ainsi que le code recu dans ce mail, et lors de la confirmation de l'inscription.
+          </div>
+        </div>
+
+        <div style="margin-bottom:22px;">
+          <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:10px;">Informations du groupe</div>
+          <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.7;">
+            <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
+            <div><strong>Créateur :</strong> ${escapeHtml(creatorName)}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:22px;">
+          <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:10px;">Membres</div>
+          <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;">
+            <ol style="margin:0;padding-left:20px;line-height:1.8;">${memberItemsHtml}</ol>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+          ${buildEmailButton(pdfUrl, "Télécharger le PDF", "#2563eb")}
+        </div>
+      `,
+      footer: `Si les boutons ne fonctionnent pas, vous pouvez utiliser ces liens :<br />PDF : ${escapeHtml(pdfUrl)}<br />Modification : ${escapeHtml(editUrl)}`
+    });
 
     try {
       const info = await sendMail({ from, to: creatorEmail, subject: `Inscription TSR - ${groupName} (CODE MODIFICATION)`, text: creatorText, html: creatorHtml });
@@ -196,20 +259,31 @@ const notifyRegistrationByEmail = async ({
         `Groupe : ${groupName}`,
         `Createur : ${creatorName}`,
         "",
-        "Vous avez ete ajoute aux participants.",
+        "Vous avez ete ajoute aux participants de la Garden party de TSR Industrie !",
         "",
+        "Telechargez le PDF de confirmation ci-dessous contenant le QR code d'acces, et presentez-le à l'entree de l'evenement.",
+        "Si vous avez des questions, n'hesitez pas à contacter le createur du groupe.",
         `Telecharger le PDF : ${pdfUrl}`
       ].join("\n");
 
-      const memberHtml = `
-        <p><strong>INSCRIPTION CONFIRMEE</strong></p>
-        <p>Groupe : ${groupName}<br />
-        Createur : ${creatorName}</p>
-        <p>Vous avez ete ajoute aux participants.</p>
-        <p>
-          <a href="${pdfUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Telecharger le PDF</a>
-        </p>
-      `;
+      const memberHtml = buildEmailShell({
+        title: "Inscription confirmee",
+        intro: `Vous avez ete ajoute au groupe <strong>${escapeHtml(groupName)}</strong>.`,
+        body: `
+          <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.8;margin-bottom:22px;">
+            <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
+            <div><strong>Createur :</strong> ${escapeHtml(creatorName)}</div>
+          </div>
+
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
+            <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">Participation enregistree</div>
+            <div style="font-size:14px;line-height:1.7;color:#1e3a8a;">Vous avez ete ajoute aux participants. Le PDF de confirmation est disponible ci-dessous.</div>
+          </div>
+
+          ${buildEmailButton(pdfUrl, "Telecharger le PDF", "#2563eb")}
+        `,
+        footer: `Si le bouton ne fonctionne pas, ouvrez ce lien : ${escapeHtml(pdfUrl)}`
+      });
 
       try {
         const info = await sendMail({ from, to: member.email, subject: `Inscription TSR - ${groupName}`, text: memberText, html: memberHtml });
