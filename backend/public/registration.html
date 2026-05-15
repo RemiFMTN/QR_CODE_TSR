@@ -24,6 +24,58 @@
         background: radial-gradient(circle at top left, #fff8ee 0%, var(--bg) 55%);
       }
 
+      .navbar {
+        background: #1f2937;
+        padding: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .navbar-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 20px;
+      }
+
+      .navbar-logo img {
+        height: 50px;
+        width: auto;
+      }
+
+      .navbar-links {
+        display: flex;
+        gap: 20px;
+      }
+
+      .nav-link {
+        color: #ffffff;
+        text-decoration: none;
+        font-size: 14px;
+        font-weight: 600;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: background-color 0.2s;
+      }
+
+      .nav-link:hover {
+        background-color: #0f766e;
+      }
+
+      @media (max-width: 600px) {
+        .navbar-links {
+          gap: 12px;
+        }
+        .nav-link {
+          font-size: 13px;
+          padding: 6px 12px;
+        }
+      }
+
       .container {
         max-width: 820px;
         margin: 40px auto;
@@ -186,6 +238,18 @@
     </style>
   </head>
   <body>
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="/" class="navbar-logo">
+        <img src="LOGO-HD-TSR-PASTILLE.png" alt="TSR" />
+      </a>
+      <div class="navbar-links">
+        <a href="/public/registration.html" class="nav-link">Inscrire un groupe</a>
+        <a href="/public/edit.html" class="nav-link">Éditer un groupe</a>
+      </div>
+    </div>
+  </nav>
+
     <div class="container">
       <div class="card">
         <div class="intro">
