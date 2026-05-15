@@ -54,6 +54,30 @@
             margin-bottom: 30px;
             text-align: left;
         }
+        .participants-list {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e9ecef;
+        }
+        .participants-title {
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .participant-items {
+            list-style: decimal;
+            padding-left: 20px;
+        }
+        .participant-item {
+            padding: 6px 0;
+            color: #333;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .participant-email {
+            color: #666;
+            font-size: 13px;
+        }
         .info-row {
             display: flex;
             justify-content: space-between;
@@ -108,6 +132,7 @@
             display: grid;
             gap: 12px;
             margin-top: 30px;
+            margin-bottom: 20px;
         }
         .btn {
             padding: 14px 24px;
@@ -188,7 +213,13 @@
 <body>
     <div class="container">
         <h1>Inscription Confirmée !</h1>
-        <p class="subtitle">Votre groupe a été créé avec succès.</p>
+        <p class="subtitle">QR codes envoyés à tous les participants.</p>
+
+        <div class="actions">
+            <button class="btn btn-primary" onclick="downloadPDF()">Télécharger le QR code</button>
+            <button class="btn btn-secondary" onclick="goToEdit()">Modifier le groupe</button>
+            <button class="btn btn-outline" onclick="goHome()">Créer une nouvelle invitation de groupe</button>
+        </div>
 
         <div class="group-info">
             <div class="info-row">
@@ -203,27 +234,12 @@
                 <span class="info-label">Nombre de participants :</span>
                 <span class="info-value" id="memberCount">-</span>
             </div>
-        </div>
-
-        <div class="code-section">
-            <div class="code-label">🔐 Code de Modification (À conserver précieusement)</div>
-            <div class="code-display" id="codeDisplay" onclick="copyCode()">
-                -
-            </div>
-            <div class="code-warning">
-                💾 Cliquez pour copier | Gardez ce code en lieu sûr pour modifier le groupe plus tard
+            <div class="participants-list">
+                <div class="participants-title">Liste complète des participants</div>
+                <ol class="participant-items" id="participantsList"></ol>
             </div>
         </div>
 
-        <div class="actions">
-            <button class="btn btn-primary" onclick="downloadPDF()">📥 Télécharger le PDF</button>
-            <button class="btn btn-secondary" onclick="goToEdit()">✏️ Modifier le groupe</button>
-            <button class="btn btn-outline" onclick="goHome()">🏠 Retour à l'accueil</button>
-        </div>
-
-        <div class="footer">
-            Un email de confirmation a également été envoyé à <strong id="emailDisplay">votre adresse</strong>
-        </div>
     </div>
 
     <div class="copy-feedback" id="copyFeedback">✓ Code copié !</div>
@@ -238,16 +254,61 @@
         const creatorEmail = params.get('creatorEmail');
         const qrToken = params.get('qrToken');
         const memberCount = params.get('memberCount') || '0';
+        let members = [];
+
+        try {
+            members = JSON.parse(params.get('members') || '[]');
+            if (!Array.isArray(members)) {
+                members = [];
+            }
+        } catch (error) {
+            members = [];
+        }
 
         // Display info
-        document.getElementById('codeDisplay').textContent = fallbackCode || '-';
-        document.getElementById('groupName').textContent = groupName || '-';
-        document.getElementById('creatorName').textContent = creatorName || '-';
-        document.getElementById('memberCount').textContent = memberCount;
-        document.getElementById('emailDisplay').textContent = creatorEmail || 'votre adresse';
+        const groupNameEl = document.getElementById('groupName');
+        const creatorNameEl = document.getElementById('creatorName');
+        const memberCountEl = document.getElementById('memberCount');
+        const participantsListEl = document.getElementById('participantsList');
+
+        if (groupNameEl) groupNameEl.textContent = groupName || '-';
+        if (creatorNameEl) creatorNameEl.textContent = creatorName || '-';
+        if (memberCountEl) memberCountEl.textContent = memberCount;
+
+        if (participantsListEl) {
+            participantsListEl.innerHTML = '';
+            if (members.length === 0) {
+                const emptyItem = document.createElement('li');
+                emptyItem.className = 'participant-item';
+                emptyItem.textContent = 'Aucun participant à afficher.';
+                participantsListEl.appendChild(emptyItem);
+            } else {
+                members.forEach((member) => {
+                    const item = document.createElement('li');
+                    item.className = 'participant-item';
+
+                    const name = document.createElement('span');
+                    name.textContent = member && member.fullName ? member.fullName : '-';
+                    item.appendChild(name);
+
+                    if (member && member.email) {
+                        const email = document.createElement('span');
+                        email.className = 'participant-email';
+                        email.textContent = ` (${member.email})`;
+                        item.appendChild(email);
+                    }
+
+                    participantsListEl.appendChild(item);
+                });
+            }
+        }
 
         function copyCode() {
-            const code = document.getElementById('codeDisplay').textContent;
+            const codeDisplayEl = document.getElementById('codeDisplay');
+            if (!codeDisplayEl) {
+                return;
+            }
+            const code = codeDisplayEl.textContent;
             navigator.clipboard.writeText(code).then(() => {
                 const feedback = document.getElementById('copyFeedback');
                 feedback.style.display = 'block';

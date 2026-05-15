@@ -319,7 +319,8 @@
             creatorName: data.group.creatorName,
             creatorEmail: data.group.creatorEmail,
             qrToken: data.group.qrToken,
-            memberCount: data.members.length
+            memberCount: data.members.length,
+            members: JSON.stringify(data.members)
           });
 
           window.location.href = `/public/confirmation.html?${confirmParams.toString()}`;

@@ -39,6 +39,7 @@
       border: 1px solid #e5e7eb;
       border-radius: 16px;
       background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.04);
     }
     .section-header {
       display: flex;
@@ -101,9 +102,40 @@
     .search-empty { padding: 10px; border: 1px dashed #d1d5db; border-radius: 10px; }
     .actions { display:flex; gap:12px; align-items:center; flex-wrap: wrap; }
     .primary { background:var(--accent); color:white; border:none; border-radius:12px; padding:12px 18px; cursor:pointer }
+    .primary:disabled {
+      background: #cbd5e1;
+      color: #64748b;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
     .secondary { background:#ecfeff; border:1px solid #a5f3fc; color:#0e7490; border-radius:12px; padding:10px 16px; cursor:pointer }
     .muted { color:var(--muted) }
     .hidden { display:none }
+    .overview-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #eefaf9 100%);
+      border: 1px solid #dbeafe;
+      border-radius: 18px;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+    .overview-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(180px, 0.9fr);
+      gap: 14px;
+      align-items: end;
+    }
+    .field-note {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .status-line {
+      min-height: 20px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .status-line strong { color: var(--ink); }
     .success-message {
       margin-top: 12px;
       padding: 12px 14px;
@@ -127,6 +159,7 @@
     @media (max-width:720px) {
       .row, .member, .summary-grid { grid-template-columns:1fr }
       .member { align-items:flex-start; gap: 12px; }
+      .overview-top { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -172,60 +205,34 @@
           <div class="section-header">
             <div>
               <h2 class="section-title">Vue d’ensemble</h2>
-              <p class="section-description">Les informations principales du groupe sont regroupées ici.</p>
+              <p class="section-description">Modifiez uniquement le nom du groupe et suivez le nombre de participants.</p>
             </div>
             <span class="badge">Étape 2</span>
           </div>
-
-          <label>Nom du groupe</label>
-          <input id="groupName" type="text" />
-
-          <div class="row">
-            <div>
-              <label>Nom du créateur</label>
-              <input id="creatorName" type="text" />
+          <div class="overview-card">
+            <div class="overview-top">
+              <div>
+                <label for="groupName">Nom du groupe</label>
+                <input id="groupName" type="text" placeholder="Nom du groupe" />
+                <div class="field-note">Le bouton de validation s’active uniquement si vous modifiez ce champ.</div>
+              </div>
+              <div class="summary-card" style="margin:0;">
+                <span class="summary-label">Nombre de participants</span>
+                <span class="summary-value" id="memberCountLabel">0</span>
+              </div>
             </div>
-            <div>
-              <label class="muted">QR Token (lecture seule)</label>
-              <input id="qrToken" type="text" readonly />
+            <div class="toolbar">
+              <button id="btnValidateGroup" class="primary" disabled>Valider les changements</button>
             </div>
+            <div id="groupStatus" class="status-line"></div>
           </div>
-
-          <div class="summary-grid">
-            <div class="summary-card">
-              <span class="summary-label">Participants</span>
-              <span class="summary-value" id="memberCountLabel">0</span>
-            </div>
-            <div class="summary-card">
-              <span class="summary-label">Membres visibles</span>
-              <span class="summary-value" id="visibleMemberCountLabel">0</span>
-            </div>
-            <div class="summary-card">
-              <span class="summary-label">Recherche</span>
-              <span class="summary-value" id="currentSearchLabel">Aucune</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <div class="section-header">
-            <div>
-              <h3 class="section-title">Recherche des membres</h3>
-              <p class="section-description">Filtrez la liste en tapant un nom ou un email.</p>
-            </div>
-          </div>
-          <div class="search-wrap">
-            <input id="memberSearch" type="text" placeholder="Rechercher un membre (nom ou email)" />
-            <button id="clearSearch" type="button" class="clear-search" aria-label="Effacer la recherche">&times;</button>
-          </div>
-          <div id="membersList"></div>
         </div>
 
         <div class="section">
           <div class="section-header">
             <div>
               <h3 class="section-title">Ajouter un membre</h3>
-              <p class="section-description">L’invitation est envoyée uniquement au nouveau membre ajouté.</p>
+              <p class="section-description">L’ajout enregistre directement le membre et envoie le mail si une adresse est renseignée.</p>
             </div>
             <span class="badge">Étape 3</span>
           </div>
@@ -245,12 +252,39 @@
         <div class="section">
           <div class="section-header">
             <div>
+              <h3 class="section-title">Recherche des membres</h3>
+              <p class="section-description">Filtrez la liste en tapant un nom ou un email.</p>
+            </div>
+          </div>
+          <div class="search-wrap">
+            <input id="memberSearch" type="text" placeholder="Rechercher un membre (nom ou email)" />
+            <button id="clearSearch" type="button" class="clear-search" aria-label="Effacer la recherche">&times;</button>
+          </div>
+          <div class="summary-grid">
+            <div class="summary-card">
+              <span class="summary-label">Membres visibles</span>
+              <span class="summary-value" id="visibleMemberCountLabel">0</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">Recherche</span>
+              <span class="summary-value" id="currentSearchLabel">Aucune</span>
+            </div>
+            <div class="summary-card">
+              <span class="summary-label">État</span>
+              <span class="summary-value" id="groupEditStateLabel">Nom inchangé</span>
+            </div>
+          </div>
+          <div id="membersList" style="margin-top:14px;"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-header">
+            <div>
               <h3 class="section-title">Actions</h3>
-              <p class="section-description">Enregistrez vos changements ou récupérez le PDF du groupe.</p>
+              <p class="section-description">Le PDF est toujours accessible ici.</p>
             </div>
           </div>
           <div class="toolbar">
-            <button id="btnSaveGroup" class="secondary">Enregistrer les modifications du groupe</button>
             <a id="pdfLink" class="secondary" href="#" target="_blank">Télécharger le PDF</a>
           </div>
           <div id="actionMessage" class="success-message hidden"></div>
@@ -262,6 +296,8 @@
   <script>
     let currentGroup = null;
     let currentMembers = [];
+    let initialGroupName = '';
+    let groupNameDirty = false;
 
     const el = (id) => document.getElementById(id);
     const showError = (text) => { el('lookupError').textContent = text || ''; };
@@ -270,6 +306,14 @@
       node.textContent = text || '';
       node.classList.toggle('hidden', !text);
     };
+
+    function setGroupStatus(text, isDirty = false) {
+      const node = el('groupStatus');
+      if (!node) return;
+      node.innerHTML = text ? text : '';
+      el('groupEditStateLabel').textContent = isDirty ? 'Nom modifié' : 'Nom inchangé';
+      el('btnValidateGroup').disabled = !isDirty;
+    }
 
     async function doLookup(creatorEmail, fallbackCode) {
       showError('');
@@ -299,10 +343,14 @@
     function renderEditor(data) {
       el('lookup').classList.add('hidden');
       el('editor').classList.remove('hidden');
-      el('groupName').value = data.group.name || '';
-      el('creatorName').value = data.group.creatorName || '';
-      el('qrToken').value = data.group.qrToken || '';
       el('pdfLink').href = '/public/registration.pdf?token=' + encodeURIComponent(data.group.qrToken);
+
+      initialGroupName = data.group.name || '';
+      groupNameDirty = false;
+      el('groupName').value = initialGroupName;
+      el('memberCountLabel').textContent = String((data.members || []).length);
+      el('visibleMemberCountLabel').textContent = String((data.members || []).length);
+      setGroupStatus('Nom enregistré. Les changements du groupe se valident uniquement si le nom est modifié.', false);
 
       currentMembers = data.members || [];
       renderMembers(currentMembers);
@@ -356,6 +404,11 @@
       el('currentSearchLabel').textContent = searchLabel || 'Aucune';
     }
 
+    el('groupName').addEventListener('input', () => {
+      groupNameDirty = el('groupName').value.trim() !== initialGroupName;
+      setGroupStatus(groupNameDirty ? 'Le nom du groupe a été modifié.' : 'Nom enregistré. Les changements du groupe se valident uniquement si le nom est modifié.', groupNameDirty);
+    });
+
     el('memberSearch').addEventListener('input', applyMemberFilter);
     el('clearSearch').addEventListener('click', () => {
       el('memberSearch').value = '';
@@ -363,13 +416,13 @@
       el('memberSearch').focus();
     });
 
-    el('btnSaveGroup').addEventListener('click', async () => {
+    el('btnValidateGroup').addEventListener('click', async () => {
+      if (!currentGroup || !groupNameDirty) return;
       const name = el('groupName').value.trim();
-      const creatorName = el('creatorName').value.trim();
       try {
         const res = await fetch('/public/groups/' + encodeURIComponent(currentGroup.id), {
           method: 'PUT', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, creatorName })
+          body: JSON.stringify({ name })
         });
         if (!res.ok) {
           const e = await res.json().catch(()=>({ error: 'Erreur' }));
@@ -377,6 +430,9 @@
         }
         const data = await res.json();
         currentGroup = data.group;
+        initialGroupName = data.group.name || name;
+        groupNameDirty = false;
+        setGroupStatus('Nom du groupe mis à jour.', false);
         alert('Groupe mis à jour');
         showActionMessage('Modifications enregistrées avec succès');
       } catch (err) {
@@ -397,7 +453,7 @@
         if (!res.ok) { const e = await res.json().catch(()=>({ error:'Erreur' })); return alert(e.error || 'Échec'); }
         await refreshGroup();
         el('newMemberName').value = ''; el('newMemberEmail').value = '';
-        showActionMessage(email ? 'Invitations envoyés aux membres ajoutés' : 'Membre ajouté');
+        showActionMessage(email ? 'Le membre a été ajouté et le mail a été envoyé si l’adresse est valide.' : 'Membre ajouté');
       } catch (err) { console.error(err); alert('Erreur réseau'); }
     });
 
@@ -416,7 +472,15 @@
         if (!res.ok) return alert('Impossible de rafraîchir');
         const data = await res.json();
         currentGroup = data.group;
+        const typedName = el('groupName').value.trim();
+        const hasDirtyName = groupNameDirty && typedName && typedName !== (data.group.name || '');
         renderEditor(data);
+        if (hasDirtyName) {
+          el('groupName').value = typedName;
+          initialGroupName = data.group.name || '';
+          groupNameDirty = true;
+          setGroupStatus('Le nom du groupe a été modifié.', true);
+        }
       } catch (err) { console.error(err); }
     }
 
