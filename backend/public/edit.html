@@ -109,6 +109,9 @@
       box-shadow: none;
     }
     .secondary { background:#ecfeff; border:1px solid #a5f3fc; color:#0e7490; border-radius:12px; padding:10px 16px; cursor:pointer }
+    .delete { background:#dc2626; border:none; color:#ffffff; border-radius:12px; padding:10px 16px; cursor:pointer }
+    .delete:hover { background:#b91c1c; }
+    .delete:disabled { background:#cbd5e1; color:#64748b; cursor:not-allowed; }
     .muted { color:var(--muted) }
     .hidden { display:none }
     .overview-card {
@@ -383,7 +386,7 @@
         const left = document.createElement('div');
         left.innerHTML = '<strong>' + escapeHtml(m.full_name || '') + '</strong>' + (m.email ? ('<div class="muted">' + escapeHtml(m.email) + '</div>') : '');
         const del = document.createElement('button');
-        del.className = 'secondary';
+        del.className = 'delete';
         del.textContent = 'Supprimer et enregistrer';
         if (m.isCreatorOnly) {
           del.disabled = true;
