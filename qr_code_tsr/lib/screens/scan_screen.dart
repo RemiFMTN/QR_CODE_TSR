@@ -141,6 +141,23 @@ class _ScanScreenState extends State<ScanScreen> {
             padding: const EdgeInsets.all(20),
             children: [
               _ScanCard(
+                title: 'Scanner un QR code',
+                description: 'Ouvre la camera et detecte un QR code.',
+                buttonLabel: _loading ? 'Chargement...' : 'Lancer le scan',
+                onPressed: _loading
+                    ? null
+                    : () async {
+                        final code = await Navigator.of(context).push<String>(
+                          MaterialPageRoute(
+                            builder: (_) => const QrScannerScreen(),
+                          ),
+                        );
+                        if (!context.mounted || code == null) return;
+                        await _openGroup(qrToken: code);
+                      },
+              ),
+              const SizedBox(height: 16),
+              _ScanCard(
                 title: 'Recherche globale',
                 description:
                     'Recherche en temps réel sur les noms et les groupes.',
@@ -169,23 +186,6 @@ class _ScanScreenState extends State<ScanScreen> {
                   },
                 ),
               ],
-              const SizedBox(height: 16),
-              _ScanCard(
-                title: 'Scanner un QR code',
-                description: 'Ouvre la camera et detecte un QR code.',
-                buttonLabel: _loading ? 'Chargement...' : 'Lancer le scan',
-                onPressed: _loading
-                    ? null
-                    : () async {
-                        final code = await Navigator.of(context).push<String>(
-                          MaterialPageRoute(
-                            builder: (_) => const QrScannerScreen(),
-                          ),
-                        );
-                        if (!context.mounted || code == null) return;
-                        await _openGroup(qrToken: code);
-                      },
-              ),
               const SizedBox(height: 16),
               _ScanCard(
                 title: 'Recherche manuelle',
