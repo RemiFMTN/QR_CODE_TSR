@@ -211,7 +211,7 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
           ${buildEmailButton(pdfUrl, "Télécharger l'invitation (QR Code)", "#2563eb")}
         </div>
         
-        <div style="margin-bottom:22px;">
+        <div style="margin-bottom:22px; margin-top:22px;">
           <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:10px;">Informations du groupe</div>
           <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.7;">
             <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
@@ -235,7 +235,7 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
         <div style="background:#fef2f2;border:2px solid #ef4444;border-left:8px solid #dc2626;border-radius:14px;padding:18px 20px;margin-bottom:22px;box-shadow:0 6px 18px rgba(220,38,38,0.12);">
           <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#991b1b;margin-bottom:10px;">Information importante</div>
           <div style="font-size:15px;line-height:1.7;color:#7f1d1d;font-weight:700;">
-            Si vous devez modifier votre groupe, contactez la personne qui vous a inscrite à l'événement, et transmettez-lui le mail fourni lors de la création du groupe, ainsi que le code reçu dans ce mail.
+            Si vous devez modifier votre groupe, contactez la personne qui vous a inscrite à l'événement, et transmettez-lui le mail fourni lors de la création du groupe, ainsi que le code de modification présent dans ce mail.
           </div>
         </div>
       `,
@@ -271,17 +271,16 @@ const buildEmailShell = ({ title, intro, body, footer }) => `
         intro: `Vous avez été ajouté au groupe <strong>${escapeHtml(groupName)}</strong>.`,
         body: `        
 
-          ${buildEmailButton(pdfUrl, "Télécharger le PDF", "#2563eb")}
+          ${buildEmailButton(pdfUrl, "Télécharger l'invitation (QR Code)", "#2563eb")}
 
-          <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.8;margin-bottom:22px;">
+          <div style="margin-top:22px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:16px 18px;line-height:1.8;margin-bottom:22px;">
             <div><strong>Groupe :</strong> ${escapeHtml(groupName)}</div>
             <div><strong>Createur :</strong> ${escapeHtml(creatorName)}</div>
           </div>
 
           <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:18px 20px;margin-bottom:22px;">
             <div style="font-size:14px;font-weight:700;color:#1d4ed8;margin-bottom:6px;">Participation enregistrée</div>
-            <div style="font-size:14px;line-height:1.7;color:#1e3a8a;padding-bottom:2px;">Vous avez été invité à la Garden Party de TSR Industrie.</div>
-            <div style="font-size:14px;color:#1e3a8a;font-weight:700;">IMPORTANT: Téléchargez le PDF contenant le QR code d'accès à présenter lors de votre arrivée.</div>
+            <div style="font-size:14px;color:#1e3a8a;font-weight:700;">IMPORTANT: Téléchargez le PDF contenant le QR code d'accès à présenter lors de votre arrivée. Celui-ci fait office de justificatif à l'entrée.</div>
           </div>
         `,
         footer: `Si le bouton ne fonctionne pas, ouvrez ce lien : ${escapeHtml(pdfUrl)}`
