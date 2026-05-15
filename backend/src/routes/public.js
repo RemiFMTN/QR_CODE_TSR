@@ -150,30 +150,24 @@ const notifyRegistrationByEmail = async ({
   `;
 
 const buildEmailShell = ({ title, intro, body, footer }) => `
-  <div style="margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
-    <div style="max-width:640px;margin:0 auto;padding:24px 12px;">
-      <div style="background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);color:#ffffff;border-radius:18px 18px 0 0;padding:28px 32px;">
-        <div style="font-size:12px;letter-spacing:1.6px;text-transform:uppercase;opacity:0.85;margin-bottom:8px;">
-          TSR
-        </div>
+  <div style="background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);color:#ffffff;border-radius:18px 18px 0 0;padding:28px 32px;">
 
-        <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff !important;">
-          ${title}
-        </h1>
-
-        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#ffffff !important;opacity:0.95;">
-          ${intro}
-        </p>
-      </div>
-
-      <div style="background:#ffffff;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;padding:30px 32px;box-shadow:0 10px 30px rgba(15,23,42,0.08);">
-        ${body}
-
-        <div style="margin-top:28px;padding-top:20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;line-height:1.6;">
-          ${footer}
-        </div>
-      </div>
+    <div style="font-size:12px;letter-spacing:1.6px;text-transform:uppercase;opacity:0.85;margin-bottom:8px;">
+      TSR
     </div>
+
+    <h1 style="margin:0;font-size:24px;line-height:1.2;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">
+      <span style="color:#ffffff !important;">
+        ${title}
+      </span>
+    </h1>
+
+    <p style="margin:12px 0 0;font-size:15px;line-height:1.6;color:#ffffff !important;-webkit-text-fill-color:#ffffff !important;">
+      <span style="color:#ffffff !important;">
+        ${intro}
+      </span>
+    </p>
+    
   </div>
 `;
 
